@@ -1,4 +1,4 @@
-# PyoSynth
+# Pyo Synth
 A GUI to help with pyo synthesizer scripts manipulation.</br>
 License : GNU GPL v3
 
