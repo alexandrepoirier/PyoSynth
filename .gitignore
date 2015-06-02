@@ -20,4 +20,8 @@ Pyo Synth 0.1.1-dev/scripts/encrypt_file.py
 Pyo Synth 0.1.1-dev/scripts/sendCrashReport.py
 
 Pyo Synth 0.1.1-dev/tests/
+
 Pyo Synth 0.1.1-dev/particularités Mac app.rtf
+
+Pyo Synth 0.1.1-dev/.idea/
+*.pyc
