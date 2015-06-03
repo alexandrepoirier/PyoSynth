@@ -4,8 +4,8 @@
 """
 Copyright 2015 Alexandre Poirier
 
-This file is part of Pyo Synth, a python module to help digital signal
-processing script creation.
+This file is part of Pyo Synth, a GUI written in python that helps
+with live manipulation of synthesizer scripts written with the pyo library.
 
 Pyo Synth is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -111,10 +111,12 @@ class RecordedTrackElement(wx.Panel):
         self.GetParent()._setSelection(self)
 
     def OnMouseIn(self, evt):
+        evt.Skip()
         self._hover = True
         self.Refresh()
 
     def OnMouseOut(self, evt):
+        evt.Skip()
         self._hover = False
         self.Refresh()
 
@@ -183,7 +185,6 @@ class RecordedTrackElement(wx.Panel):
             defaultFile=".wav",
             style=wx.SAVE
         )
-        self.GetParent().GetParent().GetParent().Show(False)
         if dlg.ShowModal() == wx.ID_OK:
             # This returns the path of the selected file as a string
             path = dlg.GetPath()
@@ -193,7 +194,6 @@ class RecordedTrackElement(wx.Panel):
                 path = ext[0] + ".wav"
             shutil.move(self._info[0], path)
             self._removeTrack()
-        self.GetParent().GetParent().GetParent().Show(True)
 
     def _deleteTrack(self, evt):
         os.remove(self._info[0])
@@ -269,6 +269,8 @@ class RecordedTracksList(wx.PyScrolledWindow):
         self._tracks_list.remove(track)
         self._repositionTrackElements()
         self._setVerticalScroll()
+        if len(self._tracks_list) == 0:
+            self.GetGrandParent().noMoreTracks()
 
     def _repositionTrackElements(self):
         for i, elem in enumerate(self._tracks_list):
@@ -289,7 +291,7 @@ class RecordedTracksWindow(wx.Frame):
     def __init__(self, parent, server, namespace):
         self.server = server
         self.script_namespace = namespace
-        wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.STAY_ON_TOP)
+        wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
         self.SetTransparent(0)
         self.panel = wx.Panel(self, size=self.GetSize() + (1, 1))
         self.file_info = ""
@@ -364,6 +366,9 @@ class RecordedTracksWindow(wx.Frame):
         self._trackRecorder.stop()
         self.tracks_list.addTrack(self.file_info)
 
+    def noMoreTracks(self):
+        self.GetParent().noMoreTracks()
+
 ##Custom events for the ServerSetupPanel
 myEVT_INTERFACE_CHANGED = wx.NewEventType()
 EVT_INTERFACE_CHANGED = wx.PyEventBinder(myEVT_INTERFACE_CHANGED, 1)
@@ -385,7 +390,7 @@ class ServerSetupEvent(wx.PyCommandEvent):
 
 class ServerSetupPanel(wx.Panel):
     def __init__(self, parent, server):
-        wx.Panel.__init__(self, parent, -1, (690, 61), (450, 260))
+        wx.Panel.__init__(self, parent, -1, (640, 61), (500, 260))
         self.SetBackgroundColour("#000000")
         self.SetTransparent(0)
         self.Show(False)
@@ -418,6 +423,7 @@ class ServerSetupPanel(wx.Panel):
         self.leftMargin = 8
         self.topMargin = 8
         self.interfaceCtrlPos = (self.leftMargin, 40)
+        self.midiCtrlPos = (270, 40)
         self.lineSepPos = (20, 157)
         self.sampratePos = (self.leftMargin, 175)
         self.bufsizePos = (self.leftMargin, 205)
@@ -429,6 +435,10 @@ class ServerSetupPanel(wx.Panel):
         x, y = self.interfaceCtrlPos
         self.inputChoice = wx.Choice(self, -1, (x + 6, y + 36), choices=self.listDevices("input"))
         self.outputChoice = wx.Choice(self, -1, (x + 6, y + 80), choices=self.listDevices("output"))
+
+        x, y = self.midiCtrlPos
+        self.midiInputChoice = wx.Choice(self, -1, (x + 6, y + 36), choices=self.listMidiDevices("input"))
+        self.midiOutputChoice = wx.Choice(self, -1, (x + 6, y + 80), choices=self.listMidiDevices("output"))
 
         x, y = self.sampratePos
         self.samprateChoice = wx.Choice(self, -1, (x + 100, y - 6), choices=self.samplingRates)
@@ -450,6 +460,8 @@ class ServerSetupPanel(wx.Panel):
         self.Bind(wx.EVT_TIMER, self.changeAlpha)
         self.Bind(wx.EVT_CHOICE, self.changeInput, self.inputChoice)
         self.Bind(wx.EVT_CHOICE, self.changeOutput, self.outputChoice)
+        self.Bind(wx.EVT_CHOICE, self.changeMidiInput, self.midiInputChoice)
+        self.Bind(wx.EVT_CHOICE, self.changeMidiOutput, self.midiOutputChoice)
         self.Bind(wx.EVT_CHOICE, self.changeSampRate, self.samprateChoice)
         self.Bind(wx.EVT_CHOICE, self.changeBufSize, self.bufsizeChoice)
         self.Bind(wx.EVT_CHOICE, self.changeAudioDriver, self.audioDriverChoice)
@@ -487,6 +499,10 @@ class ServerSetupPanel(wx.Panel):
         dc.SetFont(smallFont)
         dc.DrawText("input", x + 6, y + 20)
         dc.DrawText("output", x + 6, y + 65)
+
+        x, y = self.midiCtrlPos
+        dc.DrawText("Midi input", x + 6, y + 20)
+        dc.DrawText("Midi output", x + 6, y + 65)
 
         x, y = self.lineSepPos
         dc.DrawLine(x, y, w - x, y)
@@ -538,20 +554,34 @@ class ServerSetupPanel(wx.Panel):
     def changeInput(self, evt):
         self._server.stop()
 
-        self.preferences['input'] = int(evt.GetString()[0])
+        self.preferences['input'] = int(evt.GetString().split(':')[0][:-1])
 
         self.initServer()
 
     def changeOutput(self, evt):
         self._server.stop()
 
-        self.preferences['output'] = int(evt.GetString()[0])
+        self.preferences['output'] = int(evt.GetString().split(':')[0][:-1])
 
         self.initServer()
 
         # Custom event business
         event = ServerSetupEvent(myEVT_INTERFACE_CHANGED, self.GetId())
         self.GetEventHandler().ProcessEvent(event)
+
+    def changeMidiInput(self, evt):
+        self._server.stop()
+
+        self.preferences['midi_input'] = int(evt.GetString().split(':')[0][:-1])
+
+        self.initServer()
+
+    def changeMidiOutput(self, evt):
+        self._server.stop()
+
+        self.preferences['midi_output'] = int(evt.GetString().split(':')[0][:-1])
+
+        self.initServer()
 
     def changeSampRate(self, evt):
         self._server.stop()
@@ -622,7 +652,9 @@ class ServerSetupPanel(wx.Panel):
             self.hasPreferences = False
             return {'sr': 44100, 'nchnls': 2, 'bfs': 256, 'duplex': 1, 'audio': 'portaudio',
                     'output': pa_get_default_output(),
-                    'input': pa_get_default_input()}
+                    'input': pa_get_default_input(),
+                    'midi_output': pm_get_default_output(),
+                    'midi_input': pm_get_default_input()}
         else:
             pref = pickle.load(f)
             f.close()
@@ -631,6 +663,10 @@ class ServerSetupPanel(wx.Panel):
                 pref['output'] = pa_get_default_output()
             if pref['input'] not in pa_get_input_devices()[1]:
                 pref['input'] = pa_get_default_input()
+            if pref['midi_output'] not in pm_get_output_devices()[1]:
+                pref['midi_output'] = pm_get_default_output()
+            if pref['midi_input'] not in pm_get_input_devices()[1]:
+                pref['midi_input'] = pm_get_default_input()
             return pref
 
     def savePreferences(self):
@@ -680,9 +716,11 @@ class ServerSetupPanel(wx.Panel):
                             self.preferences['audio'],
                             "pyo")
         self._server.setOutputDevice(self.preferences['output'])
+        self._server.setMidiOutputDevice(self.preferences['midi_output'])
         if self.preferences['duplex']:
             self._server.setInputDevice(self.preferences['input'])
-        self._server.boot().start()
+            self._server.setMidiInputDevice(self.preferences['midi_input'])
+        self._server.boot()
 
     def initServerForExport(self):
         self.SERVER_CHANGED_FLAG = True
@@ -699,6 +737,12 @@ class ServerSetupPanel(wx.Panel):
                             jackname="pyo")
         self._server.boot()
 
+    def startServer(self):
+        self._server.start()
+
+    def stopServer(self):
+        self._server.stop()
+
     def recordOptions(self, dur, name, fileformat, bitdepth):
         self._server.recordOptions(dur, name, fileformat, bitdepth)
 
@@ -707,7 +751,7 @@ class ServerSetupPanel(wx.Panel):
         Builds a list of available devices for the i/o interface choice.
         """
         devices = None
-        maxChar = 53
+        maxChar = 27
         list = []
         if type == "input":
             devices = pa_get_input_devices()
@@ -719,9 +763,26 @@ class ServerSetupPanel(wx.Panel):
             list.append(text)
         return list
 
+    def listMidiDevices(self, type):
+        """
+        Builds a list of available midi devices for the i/o interface choice.
+        """
+        devices = None
+        maxChar = 20
+        list = []
+        if type == "input":
+            devices = pm_get_input_devices()
+        elif type == "output":
+            devices = pm_get_output_devices()
+        for i in range(len(devices[0])):
+            text = str(devices[1][i]) + " : "
+            text += devices[0][i][0:maxChar]
+            list.append(text)
+        return list
+
     def updateCtrls(self):
         """
-        Updates the values of the wx.Controls for the UI.
+        Updates the values of the wx.Controls for the GUI.
         """
         self.duplexChoice.SetSelection(self.preferences['duplex'])
 
@@ -732,20 +793,36 @@ class ServerSetupPanel(wx.Panel):
             self.inputChoice.SetItems(list)
             # set the size according to largest choice
             self.inputChoice.SetSize((self.getLongestText(list) + 48, -1))
+            # do the same for midi
+            list = self.listMidiDevices("input")
+            self.midiInputChoice.SetItems(list)
+            self.midiInputChoice.SetSize((self.getLongestText(list) + 48, -1))
 
             names, indexes = pa_get_input_devices()
             self.inputChoice.SetSelection(indexes.index(self.preferences['input']))
 
             names, indexes = pa_get_output_devices()
             self.outputChoice.SetSelection(indexes.index(self.preferences['output']))
+
+            names, indexes = pm_get_input_devices()
+            self.midiInputChoice.SetSelection(indexes.index(self.preferences['midi_input']))
+
+            names, indexes = pm_get_output_devices()
+            self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
         else:
-            self.inputChoice.SetItems(["Duplex mode is set to output only."])
+            self.inputChoice.SetItems(["Duplex mode is set to out."])
+            self.midiInputChoice.SetItems(["Duplex mode is set to out."])
             self.inputChoice.SetSelection(0)
-            tw, th = wx.WindowDC(self).GetTextExtent("Duplex mode is set to output only.")
+            self.midiInputChoice.SetSelection(0)
+            tw, th = wx.WindowDC(self).GetTextExtent("Duplex mode is set to out.")
             self.inputChoice.SetSize((tw + 40, -1))
+            self.midiInputChoice.SetSize((tw + 40, -1))
 
             names, indexes = pa_get_output_devices()
             self.outputChoice.SetSelection(indexes.index(self.preferences['output']))
+
+            names, indexes = pm_get_output_devices()
+            self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
 
         sr = str(self.preferences['sr'])
         for i, elem in enumerate(self.samplingRates):
@@ -774,7 +851,7 @@ class ServerSetupPanel(wx.Panel):
 
 class PatchWindow(wx.Frame):
     def __init__(self, parent, namespace):
-        wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.STAY_ON_TOP)
+        wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
         self.SetTransparent(0)
         self.panel = wx.Panel(self, size=self.GetSize() + (1, 1))
         self.treeCtrl = wx.TreeCtrl(self.panel, size=self.panel.GetSize() - (4, 26), pos=(1, 23),
@@ -1738,6 +1815,10 @@ class StatusBarPanel(wx.Panel):
         else:
             sec = "0%d" % sec
         self.recTxtCtrl.SetTime(min + ":" + sec)
+
+    def noMoreTracks(self):
+        self.recTxtCtrl.SetText("No tracks")
+        self.recTxtCtrl.SetTime("00:00")
 
 
 class MenuPanel(wx.Panel):

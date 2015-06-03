@@ -1,8 +1,8 @@
 """
 Copyright 2015 Alexandre Poirier
 
-This file is part of Pyo Synth, a python module to help digital signal
-processing script creation.
+This file is part of Pyo Synth, a GUI written in python that helps
+with live manipulation of synthesizer scripts written with the pyo library.
 
 Pyo Synth is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published

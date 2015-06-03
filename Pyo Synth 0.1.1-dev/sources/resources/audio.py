@@ -1,8 +1,8 @@
 """
 Copyright 2015 Alexandre Poirier
 
-This file is part of Pyo Synth, a python module to help digital signal
-processing script creation.
+This file is part of Pyo Synth, a GUI written in python that helps
+with live manipulation of synthesizer scripts written with the pyo library.
 
 Pyo Synth is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -20,7 +20,8 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 from pyo import *
 import config
-import time, os.path
+import time
+import os.path
 
 class MidiControl:
     """
@@ -159,11 +160,13 @@ class MidiKeys:
         self.decay = 0.05
         self.sustain = 0.7
         self.release = 0.10
+        self.velocity_curve = 2
         self._chnl = chnl
         self._poly = poly
         self.notes = Notein(poly=poly, scale=1, channel=chnl)
+        self.velocity = Scale(self.notes['velocity'], exp=self.velocity_curve)
         self.bend = Bendin(scale=1, channel=chnl)
-        self.amp = MidiAdsr(self.notes['velocity'], self.attack, self.decay, self.sustain, self.release)
+        self.amp = MidiAdsr(self.velocity, self.attack, self.decay, self.sustain, self.release)
         
         #liste contenant tous les controles
         ##le premier est la roulette de modulation
@@ -178,18 +181,18 @@ class MidiKeys:
         Reinitializes the midiKeys audio objects in case the server has rebooted (and cleared the audio callback loop).
         """
         if self.mode == 'export':
-            del self.velocity
             del self.noteon
             del self.noteoff
         
         self.mode = 'normal'
         self.notes = Notein(poly=self._poly, scale=1, channel=self._chnl)
+        self.velocity = Scale(self.notes['velocity'], exp=self.velocity_curve)
         self.bend = Bendin(scale=1, channel=self._chnl)
         self.ctl_list[0] = Midictl(1)
         for i in range(1,17):
             self.ctl_list[i].reinit()
 
-        self.amp = MidiAdsr(self.notes['velocity'], self.attack, self.decay, self.sustain, self.release)
+        self.amp = MidiAdsr(self.velocity, self.attack, self.decay, self.sustain, self.release)
     
     def __getitem__(self, i):
         if i == 'pitch':
@@ -201,7 +204,7 @@ class MidiKeys:
             return self.amp
         if i == 'vel':
             if self.mode == 'normal':
-                return self.notes['velocity']
+                return self.velocity
             if self.mode == 'export':
                 return self.velocity
         if i == 'bend':
@@ -285,10 +288,14 @@ class MidiKeys:
     def setRelease(self, value):
         self.release = value
         self.amp.setRelease(value)
+
+    def setVelocityCurve(self, value):
+        self.velocity_curve = value
+        self.velocity.setExp(value)
     
     def prepareForExport(self, dur):
         self.mode = 'export'
-        self.velocity = Sig(1)
+        self.velocity = Scale(Sig(1), exp=self.velocity_curve)
         self.notes = Sig(1)
         self.noteon = Trig().stop()
         self.amp = Adsr(self.attack,self.decay,self.sustain,self.release, dur, mul=self.velocity)

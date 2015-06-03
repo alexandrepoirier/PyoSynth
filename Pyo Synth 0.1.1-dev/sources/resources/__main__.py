@@ -1,8 +1,8 @@
 """
 Copyright 2015 Alexandre Poirier
 
-This file is part of Pyo Synth, a python module to help digital signal
-processing script creation.
+This file is part of Pyo Synth, a GUI written in python that helps
+with live manipulation of synthesizer scripts written with the pyo library.
 
 Pyo Synth is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -22,7 +22,11 @@ from pyo import Metro, TrigFunc
 from interface import *
 from utils import checkExtension
 import audio
-import pprint, pickle, os, time, config
+import pprint
+import pickle
+import os
+import time
+import config
 
 class PyoSynth(wx.Frame):
     def __init__(self, server, namespace, chnl=0, poly=10, numControls=16):
@@ -331,11 +335,14 @@ class PyoSynth(wx.Frame):
         #to do before running the script
         if evt.IsRunning():
             self._doPrepareToRunScript()
+            self.serverSetupPanel.startServer()
         else:
             self._doStopScript()
+            self.serverSetupPanel.stopServer()
         #actually running the script
         if self.menu_panel._runScript(evt) == -1:
             self.menu_panel.btn_run.ToggleState(evt)
+            self.serverSetupPanel.stopServer()
         
     def _doPrepareToRunScript(self):
         if self.serverSetupPanel.hasChanged():
@@ -486,35 +493,16 @@ class PyoSynth(wx.Frame):
             return 1
 
     def crashSave(self):
-        preset = {}
-        preset[0] = {}
-        preset[0]['master'] = self.status_bar.vol_slider.getValue()
-        preset[0]['adsr'] = self.midiKeys.getAdsrValues()
-        preset[0]['adsr_ctlnums'] = self.menu_panel.getAdsrCtlNums()
-        for i in range(1, len(self.boxes_list)):
-            if not self.boxes_list[i].IsUnused():
-                preset[i] = {}
-                preset[i]['name'] = self.boxes_list[i].getText()
-                preset[i]['min'] = self.midiKeys.getMin(i)
-                preset[i]['max'] = self.midiKeys.getMax(i)
-                preset[i]['exp'] = self.midiKeys.getExp(i)
-                preset[i]['port'] = self.midiKeys.getPort(i)
-                preset[i]['floor'] = self.midiKeys.getFloor(i)
-                preset[i]['prec'] = self.boxes_list[i].val_prec
-                preset[i]['attr'] = self.midiKeys.getParamName(i)
-                preset[i]['ctlnum'] = self.boxes_list[i].ctl_num
-                val = self.midiKeys.getValue(i)
-                thresh = float("."+"0"*preset[i]['prec']+"1")
-                if val <= preset[i]['min']+thresh:
-                    preset[i]['val'] = None
-                elif val > preset[i]['max']:
-                    preset[i]['val'] = preset[i]['max']
-                else:
-                    preset[i]['val'] = val
-        path, name = os.path.split(self.menu_panel._script_path)
-        name, ext = name.split('.')
-        name += '_bk.'
-        path = os.path.join(path,name+ext)
+        try:
+            path, name = os.path.split(self.menu_panel._script_path)
+            name, ext = name.split('.')
+            name += '_bk.'
+            path = os.path.join(path,name+ext)
+        except:
+            return 1
+
+        preset = self.buildPreset()
+
         try:
             f = open(self.menu_panel._script_path, 'r')
         except:
@@ -553,20 +541,21 @@ class PyoSynth(wx.Frame):
                 self.status_bar._setMasterVolSlider(.8)
         valuesDict = {} #contains all the values for the MatchMode
         for key in preset:
-            self.boxes_list[key].enable(preset[key]['name'])
-            self.boxes_list[key].val_prec = preset[key]['prec']
-            self.midiKeys.setScale(key, preset[key]['min'], preset[key]['max'])
-            self.midiKeys.setExp(key, preset[key]['exp'])
-            self.midiKeys.setPort(key, preset[key]['port'])
-            self.midiKeys.setFloor(key, preset[key]['floor'])
             try:
-                if preset[key]['attr'] != None:
+                if preset[key]['attr'] is not None:
                     self._makeConnection(key, preset[key]['attr'])
+                self.boxes_list[key].enable(preset[key]['name'])
+                self.boxes_list[key].val_prec = preset[key]['prec']
+                self.midiKeys.setScale(key, preset[key]['min'], preset[key]['max'])
+                self.midiKeys.setExp(key, preset[key]['exp'])
+                self.midiKeys.setPort(key, preset[key]['port'])
+                self.midiKeys.setFloor(key, preset[key]['floor'])
             except (TypeError,NameError), e:
                 self.exc_win.printException(self.menu_panel._script_path.split('/')[-1], "PresetError : "+str(e))
+                self.boxes_list[key].enable("*"+preset[key]['name'])
             else:
                 val = preset[key]['val']
-                if val != None:
+                if val is not None:
                     valuesDict[key] = val
         self.setPresetValues(valuesDict)
                 
@@ -606,10 +595,14 @@ class PyoSynth(wx.Frame):
             
     def _makeConnection(self, ctl, attr):
         obj_name = attr.split('.')[0]
+        obj = self.script_namespace[obj_name]
+        obj_attrs = PARAMS_TREE_DICT[obj.__class__.__name__]
         if len(obj_name) == 1:
             raise TypeError, "Object reference passed in preset for MidiControl no.%d. Should be a reference to an attribute of an object." % ctl
         elif obj_name not in self.script_namespace:
             raise NameError, "The object named '%s' was not found in the script and the connection to MidiControl no.%d couldn't be made." % (obj_name,ctl)
+        elif attr.split('.')[1] not in obj_attrs:
+            raise TypeError, "Object named '%s' of type '%s' has no attribute '%s'." % (obj_name, obj.__class__.__name__, attr.split('.')[1])
         else:
             exec attr+"= self.boxes_list[ctl].getMidiControl()" in self.script_namespace, locals()
             self.boxes_list[ctl].pyo_obj.setParamName(attr)
