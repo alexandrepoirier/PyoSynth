@@ -401,6 +401,8 @@ class ServerSetupPanel(wx.Panel):
         # and that audio objects need to be reinstanciated
         # This has to be set to false after being handled by the program
         self.SERVER_CHANGED_FLAG = False
+        # will change if the 'computer keyboard' option is selected
+        self.USING_VIRTUAL_KEYS = False
 
         self.hasPreferences = False
         self.preferences = self.getPreferences()
@@ -553,10 +555,14 @@ class ServerSetupPanel(wx.Panel):
 
     def changeInput(self, evt):
         self._server.stop()
-
-        self.preferences['input'] = int(evt.GetString().split(':')[0][:-1])
-
-        self.initServer()
+        try:
+            self.preferences['input'] = int(evt.GetString().split(':')[0][:-1])
+        except ValueError:
+            # consider the case when duplex mode is set so 0 and the Choice ctrl
+            # displays only text, the int conversion will fail
+            pass
+        else:
+            self.initServer()
 
     def changeOutput(self, evt):
         self._server.stop()
@@ -572,16 +578,28 @@ class ServerSetupPanel(wx.Panel):
     def changeMidiInput(self, evt):
         self._server.stop()
 
-        self.preferences['midi_input'] = int(evt.GetString().split(':')[0][:-1])
-
-        self.initServer()
+        try:
+            self.preferences['midi_input'] = int(evt.GetString().split(':')[0][:-1])
+        except ValueError:
+            # this considers cases where duplex mode is set to 0 (and only text is selected)
+            # or when the user selects the 'computer keyboard'
+            if evt.GetString() == "Computer Keyboard":
+                self.USING_VIRTUAL_KEYS = True
+        else:
+            self.USING_VIRTUAL_KEYS = False
+            self.initServer()
 
     def changeMidiOutput(self, evt):
         self._server.stop()
 
-        self.preferences['midi_output'] = int(evt.GetString().split(':')[0][:-1])
-
-        self.initServer()
+        try:
+            self.preferences['midi_output'] = int(evt.GetString().split(':')[0][:-1])
+        except ValueError:
+            # consider the case when duplex mode is set so 0 and the Choice ctrl
+            # displays only text, the int conversion will fail
+            pass
+        else:
+            self.initServer()
 
     def changeSampRate(self, evt):
         self._server.stop()
@@ -697,6 +715,9 @@ class ServerSetupPanel(wx.Panel):
     def resetChangeFlag(self):
         self.SERVER_CHANGED_FLAG = False
 
+    def isUsingVirtualKeys(self):
+        return self.USING_VIRTUAL_KEYS
+
     def initServer(self):
         """
         Initializes the server with the new preferences.
@@ -778,6 +799,9 @@ class ServerSetupPanel(wx.Panel):
             text = str(devices[1][i]) + " : "
             text += devices[0][i][0:maxChar]
             list.append(text)
+        if type == "input":
+            if len(list) > 1: list.append("99 : All Devices")
+            list.append("Computer Keyboard")
         return list
 
     def updateCtrls(self):
@@ -789,14 +813,12 @@ class ServerSetupPanel(wx.Panel):
         if self.preferences['duplex']:
             # get the inputs
             list = self.listDevices("input")
-            # assign them to the choice
             self.inputChoice.SetItems(list)
+            list.extend(self.listDevices("output"))
             # set the size according to largest choice
-            self.inputChoice.SetSize((self.getLongestText(list) + 48, -1))
-            # do the same for midi
-            list = self.listMidiDevices("input")
-            self.midiInputChoice.SetItems(list)
-            self.midiInputChoice.SetSize((self.getLongestText(list) + 48, -1))
+            tw = self.getLongestText(list)
+            self.inputChoice.SetSize((tw + 48, -1))
+            self.outputChoice.SetSize((tw + 48, -1))
 
             names, indexes = pa_get_input_devices()
             self.inputChoice.SetSelection(indexes.index(self.preferences['input']))
@@ -804,11 +826,29 @@ class ServerSetupPanel(wx.Panel):
             names, indexes = pa_get_output_devices()
             self.outputChoice.SetSelection(indexes.index(self.preferences['output']))
 
-            names, indexes = pm_get_input_devices()
-            self.midiInputChoice.SetSelection(indexes.index(self.preferences['midi_input']))
+            # do the same for midi
+            list = self.listMidiDevices("input")
+            # handle the case where there is no midi devices connected
+            if len(list) == 1:
+                self.midiInputChoice.SetItems(list)
+                self.midiOutputChoice.SetItems(["No midi devices"])
+                self.midiInputChoice.SetSelection(0)
+                self.midiOutputChoice.SetSelection(0)
+                tw = self.getLongestText(list)
+                self.midiInputChoice.SetSize((tw + 48, -1))
+                self.midiOutputChoice.SetSize((tw + 48, -1))
+            else:
+                list.extend(self.listMidiDevices("output"))
+                tw = self.getLongestText(list)
+                self.midiInputChoice.SetSize((tw + 48, -1))
+                self.midiOutputChoice.SetSize((tw + 48, -1))
 
-            names, indexes = pm_get_output_devices()
-            self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
+                names, indexes = pm_get_input_devices()
+                indexes.append(99)
+                self.midiInputChoice.SetSelection(indexes.index(self.preferences['midi_input']))
+
+                names, indexes = pm_get_output_devices()
+                self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
         else:
             self.inputChoice.SetItems(["Duplex mode is set to out."])
             self.midiInputChoice.SetItems(["Duplex mode is set to out."])
@@ -821,8 +861,16 @@ class ServerSetupPanel(wx.Panel):
             names, indexes = pa_get_output_devices()
             self.outputChoice.SetSelection(indexes.index(self.preferences['output']))
 
-            names, indexes = pm_get_output_devices()
-            self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
+            list = self.listMidiDevices("output")
+            # handle the case where there is no midi devices connected
+            if len(list) == 0:
+                self.midiOutputChoice.SetItems(["No midi devices"])
+                self.midiOutputChoice.SetSelection(0)
+                tw = self.getLongestText(["No midi devices"])
+                self.midiOutputChoice.SetSize((tw + 48, -1))
+            else:
+                names, indexes = pm_get_output_devices()
+                self.midiOutputChoice.SetSelection(indexes.index(self.preferences['midi_output']))
 
         sr = str(self.preferences['sr'])
         for i, elem in enumerate(self.samplingRates):
@@ -2303,3 +2351,144 @@ class CrashDialog(wx.Dialog):
 
     def GetComments(self):
         return self._comments.GetValue().encode('utf_8')
+
+class VirtualKeyboard:
+    def __init__(self, style):
+        self.map_style = style
+
+        self.octave = 5
+        self.min_octave = 0
+        self.max_octave = 11-config.mapping_styles[style][0]
+        self.amp = .7 # value of the amplitude
+        self.sustain = False
+
+        self.callback = None # to be defined by setCallback
+        self.poly = -1 # to be defined by setPoly with all the variables below
+        self.keys = [] # stores which keys are pressed
+        self.notes = [] # stores what frequencies are played
+        self.sus_pressed = [] # stores the keys that are sustained which didn't send the KeyUp event
+        self.trigNoteOn = [] # streams for the note on event
+        self.trigNoteOff = [] # streams for the note off event
+
+        self.mapping = self.buildMapping()
+
+    def __getitem__(self, i):
+        if i == 'noteon':
+            return self.trigNoteOn
+        if i == 'noteoff':
+            return self.trigNoteOff
+
+    def OnKeyDown(self, evt):
+        key = evt.GetKeyCode()
+
+        if key > 313 and key < 318:
+            self.OnSpecialKey(key)
+            return
+        if key == 32:
+            self.setSustainOn()
+            return
+        if key in self.keys:
+            return
+        if key not in self.mapping:
+            return
+
+        self.addKey(key)
+        self.callback(self.notes, self.amp)
+
+    def OnKeyUp(self, evt):
+        key = evt.GetKeyCode()
+
+        if key == 32:
+            self.setSustainOff()
+            return
+
+        # if key is pressed, release it and send note off
+        if key in self.keys:
+            if not self.sustain:
+                index = self.keys.index(key)
+                self.keys[index] = 0
+                self.trigNoteOff[index].play()
+
+        if key in self.sus_pressed:
+            self.sus_pressed.remove(key)
+
+    def OnSpecialKey(self, key):
+        if key == 314:
+            self.lowerOctave()
+        elif key == 316:
+            self.raiseOctave()
+        elif key == 315:
+            self.raiseAmp()
+        elif key == 317:
+            self.lowerAmp()
+
+    def addKey(self, key):
+        try:
+            index = self.keys.index(0)
+        except:
+            return
+        else:
+            if self.sustain:
+                self.sus_pressed.append(key)
+            self.keys[index] = key
+            self.notes[index] = self.mapping[key]
+            self.trigNoteOn[index].play()
+
+    def setPoly(self, value):
+        self.poly = value
+        self.keys = [0 for i in range(self.poly)]
+        self.notes = [0 for i in range(self.poly)]
+        self.trigNoteOn = [Trig() for i in range(self.poly)]
+        self.trigNoteOff = [Trig() for i in range(self.poly)]
+
+    def setCallback(self, func):
+        self.callback = func
+
+    def setSustainOn(self):
+        if not self.sustain:
+            self.sustain = True
+            self.sus_pressed = list(self.keys)
+
+    def setSustainOff(self):
+        self.sustain = False
+
+        for key in self.keys:
+            if key not in self.sus_pressed:
+                index = self.keys.index(key)
+                self.keys[index] = 0
+                self.trigNoteOff[index].play()
+
+    def buildMapping(self):
+        dict = {}
+        note = self.octave * 12
+        for i in range(1, len(config.mapping_styles[self.map_style])):
+            dict[config.mapping_styles[self.map_style][i]] = midiToHz(note)
+            note += 1
+        return dict
+
+    def lowerOctave(self):
+        if self.octave > self.min_octave:
+            self.octave -= 1
+        self.mapping = self.buildMapping()
+
+    def raiseOctave(self):
+        if self.octave < self.max_octave:
+            self.octave += 1
+        self.mapping = self.buildMapping()
+
+    def lowerAmp(self):
+        if self.amp <= 0:
+            self.amp = 0
+        else:
+            self.amp -= .1
+
+    def raiseAmp(self):
+        if self.amp >= 1:
+            self.amp = 1
+        else:
+            self.amp += .1
+
+    def setMappingStyle(self, style):
+        self.map_style = style
+        self.max_octave = 11-config.mapping_styles[self.map_style][0]
+        self.mapping = buildMapping()

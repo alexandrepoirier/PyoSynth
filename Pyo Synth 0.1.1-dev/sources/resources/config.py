@@ -18,12 +18,14 @@ You should have received a copy of the GNU General Public License
 along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, pickle, utils, time
+import os
+import pickle
+import time
 
 #--------------------------------------------
 #--------------- Constantes -----------------
 #--------------------------------------------
-VERSION = "0.1.0b"
+VERSION = "0.1.1"
 crash_save_func = None
 hide_main_win = None
 UNIT_SIZE = (130,110)
@@ -42,6 +44,14 @@ REC_BIT_DEPTH = 1
 
 PATCH_BANNER = "#------------------------PATCH------------------------#"
 PRESET_BANNER = "#------------------------PRESET------------------------#"
+
+# defines different mapping solutions for the computer keyboard
+# first number is the approximate span of the keyboard mapping in octaves (rounded up)
+# note : in the future, the user will be able to define his own
+mapping_styles = {'keys':[2,90,83,88,68,67,86,71,66,72,78,74,77,81,50,87,51,69,82,53,84,54,89,55,85],
+                  'typewriter':[4,308,306,90,88,67,86,66,65,83,68,70,71,81,87,69,82,84,49,50,51,52,53,
+                                54,55,56,57,48,89,85,73,79,80,72,74,75,76,59,78,77,44,46,142]}
+DEFAULT_MAP_STYLE = 'keys'
 
 NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B']
 MIDI_NOTES_NAMES = []
@@ -70,7 +80,7 @@ if os.path.exists(REC_PATH):
             path = os.path.join(root,file)
             ctime = os.path.getctime(path)
             delta = time.time()-ctime
-            #suppression des fichiers vieux de plus d'une semaine
+            # suppression des fichiers vieux de plus d'une semaine
             if delta > 604800:
                 os.remove(path)
 
@@ -85,7 +95,7 @@ RECENT_SCRIPTS = []
 if os.path.exists(RECENT_SCRIPTS_PATH):
     with open(RECENT_SCRIPTS_PATH, 'r') as f:
         RECENT_SCRIPTS = pickle.load(f)
-#verifie si les fichiers existes encore
+# verifie si les fichiers existes encore
 to_del = []
 for path in RECENT_SCRIPTS:
     if not os.path.exists(path):

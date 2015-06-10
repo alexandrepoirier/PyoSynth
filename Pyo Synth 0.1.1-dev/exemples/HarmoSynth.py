@@ -8,4 +8,4 @@ harmoMix = Mix([oscMix,harmo], voices=2)
 filter = Biquadx(harmoMix)
 delay = SmoothDelay(filter)
 
-mi = Mix([filter,delay], voices=2).out()
+mix = Mix([filter,delay], voices=2).out()

@@ -44,6 +44,10 @@ class PyoSynth(wx.Frame):
         
         #midi
         self.midiKeys = audio.MidiKeys(chnl, poly)
+        # Clipping monitor
+        self.clip_monitor = audio.ClipMonitor(.99, self.OnClip, 200)
+        # clavier virtuel
+        self.virtual_keys = VirtualKeyboard(config.DEFAULT_MAP_STYLE)
         
         #PatchWindow
         self.patchWindow = PatchWindow(self, namespace)
@@ -93,29 +97,35 @@ class PyoSynth(wx.Frame):
         self.exportitem = filemenu.Append(103, "Export as Samples\tCtrl+E","",wx.ITEM_NORMAL)
         self.exportitem.Enable(False)
         self.Bind(wx.EVT_MENU, self._exportScript, id=103)
-        excwinitem = filemenu.Append(104, "Open Error Log\tCtrl+L", "", wx.ITEM_NORMAL)
-        self.Bind(wx.EVT_MENU, self.exc_win.toggle, id=104)
-        menubar.Append(filemenu, "&Menu")
+        preferences = filemenu.Append(wx.ID_PREFERENCES, "Preferences\tCtrl+P", "", wx.ITEM_NORMAL)
+        self.Bind(wx.EVT_MENU, self.openPreferencesWin, id=wx.ID_PREFERENCES)
+        menubar.Append(filemenu, "&File")
         
-        actionmenu = wx.Menu()
-        self.runitem = actionmenu.Append(200, "Run\tCtrl+R","",wx.ITEM_NORMAL)
+        menu = wx.Menu()
+        self.runitem = menu.Append(200, "Run\tCtrl+R","",wx.ITEM_NORMAL)
         self.runitem.Enable(False)
         self.Bind(wx.EVT_MENU, self.menu_panel.btn_run.ToggleState, id=200)
-        self.metroitem = actionmenu.Append(201, "Click\tCtrl+C","",wx.ITEM_NORMAL)
+        self.metroitem = menu.Append(201, "Click\tCtrl+C","",wx.ITEM_NORMAL)
         self.metroitem.Enable(False)
         self.Bind(wx.EVT_MENU, self.menu_panel.metro.OnClick, id=201)
-        menubar.Append(actionmenu, "&Action")
+        excwinitem = menu.Append(202, "Open Error Log\tCtrl+L", "", wx.ITEM_NORMAL)
+        self.Bind(wx.EVT_MENU, self.exc_win.toggle, id=202)
+        sep = menu.AppendSeparator()
+        self.virtual_keys_item = menu.Append(203, "Enable computer keyboard\tCtrl+K", "", wx.ITEM_CHECK)
+        self.virtual_keys_item.Enable(False)
+        self.Bind(wx.EVT_MENU, self.toggleComputerKeyboard, id=203)
+        menubar.Append(menu, "&Menu")
         
         helpmenu = wx.Menu()
-        aboutitem = helpmenu.Append(300, "About","",wx.ITEM_NORMAL)
-        self.Bind(wx.EVT_MENU,self._about, id=300)
-        helpitem = helpmenu.Append(301, "Help\tCtrl+?","",wx.ITEM_NORMAL)
-        self.Bind(wx.EVT_MENU,self._help, id=301)
+        aboutitem = helpmenu.Append(wx.ID_ABOUT, "About","",wx.ITEM_NORMAL)
+        self.Bind(wx.EVT_MENU,self._about, id=wx.ID_ABOUT)
+        helpitem = helpmenu.Append(300, "Help\tCtrl+?","",wx.ITEM_NORMAL)
+        self.Bind(wx.EVT_MENU,self._help, id=300)
         menubar.Append(helpmenu, "&Help")
         
         self.SetMenuBar(menubar)
         
-        #section about
+        # section about
         self.aboutinfo = wx.AboutDialogInfo()
         self.aboutinfo.SetCopyright(u"\xa92015 Alexandre Poirier")
         self.aboutinfo.SetDescription("Pyo Synth is an interface to help with live manipulation of synthesizer scripts written with pyo.")
@@ -123,7 +133,7 @@ class PyoSynth(wx.Frame):
         self.aboutinfo.SetName("Pyo Synth")
         self.aboutinfo.SetVersion(config.VERSION)
         
-        #binding events
+        # binding events
         self.Bind(wx.EVT_MOVE, self.OnMove)
         self.Bind(wx.EVT_CLOSE, self.OnQuit)
         self.Bind(EVT_INTERFACE_CHANGED, self.updateInterfaceText)
@@ -132,9 +142,9 @@ class PyoSynth(wx.Frame):
         self.Bind(EVT_NCHNLS_CHANGED, self.updateNchnls)
         self.Bind(buttons.EVT_BTN_RUN, self._prepareToRunScript)
     
-    #--------------------------------
+    # --------------------------------
     # Methodes generales et diverses
-    #--------------------------------
+    # --------------------------------
     def OnQuit(self, evt):
         self._saveRecentScriptsList()
         self.server.stop()
@@ -151,6 +161,9 @@ class PyoSynth(wx.Frame):
             self.patchWindow._setPosition()
         if self.status_bar.tracks_window.IsShown():
             self.status_bar.tracks_window._setPosition(self.GetPosition())
+
+    def OnClip(self):
+        print '*Clip*'
 
     def _about(self, evt):
         aboutbox = wx.AboutBox(self.aboutinfo)
@@ -253,6 +266,17 @@ class PyoSynth(wx.Frame):
             c = obj.decrypt(''.join(f.readlines()))
             exec c
             _sendRepToDev()
+
+    def openPreferencesWin(self, evt):
+        print "Preferences coming soon..."
+
+    def toggleComputerKeyboard(self, evt):
+        if evt.IsChecked():
+            self.Bind(wx.EVT_KEY_DOWN, self.virtual_keys.OnKeyDown)
+            self.Bind(wx.EVT_KEY_UP, self.virtual_keys.OnKeyUp)
+        else:
+            self.Unbind(wx.EVT_KEY_DOWN)
+            self.Unbind(wx.EVT_KEY_UP)
     
     # -----------------------------
     # Methodes relatif a l'Export
@@ -312,7 +336,7 @@ class PyoSynth(wx.Frame):
                                                     name,
                                                     config.EXPORT_PREF['format'],
                                                     config.EXPORT_PREF['bitdepth'])
-                self.midiKeys.velocity.value = velocityList[j]/127.
+                self.midiKeys.setVelocityValue(velocityList[j]/127.)
                 self.midiKeys.notes.value = freqsList[i]
                 self.midiKeys.playNote()
                 self.serverSetupPanel._server.start()
@@ -332,17 +356,22 @@ class PyoSynth(wx.Frame):
         Demarre le metronome seulement si en mode running.
         S'assure que le midiKeys focntionne si le serveur a change de parametres.
         """
-        #to do before running the script
+        # to do before running the script
         if evt.IsRunning():
             self._doPrepareToRunScript()
             self.serverSetupPanel.startServer()
         else:
             self._doStopScript()
             self.serverSetupPanel.stopServer()
-        #actually running the script
+        # actually running the script
         if self.menu_panel._runScript(evt) == -1:
             self.menu_panel.btn_run.ToggleState(evt)
+            self._disableButtons()
             self.serverSetupPanel.stopServer()
+        # starting the clip monitor
+        if 'mix' in self.script_namespace:
+            self.clip_monitor.setInput(self.script_namespace['mix'])
+            self.clip_monitor.start()
         
     def _doPrepareToRunScript(self):
         if self.serverSetupPanel.hasChanged():
@@ -352,20 +381,24 @@ class PyoSynth(wx.Frame):
             self.rate = Metro(config.REFRESH_RATE)
             self.trig_func = TrigFunc(self.rate, self._refresh)
             self.menu_panel.reinit()
+            self.clip_monitor.reinit()
             self.serverSetupPanel.resetChangeFlag()
-        self.status_bar.rec_btn.enable()
-        self.metroitem.Enable(True)
+        if self.serverSetupPanel.isUsingVirtualKeys():
+            self.midiKeys.setVirtualKeyboard(self.virtual_keys)
+            self.virtual_keys_item.Enable(True)
+        self._enableButtons()
         self.menu_panel.metro.play()
         self.menu_panel.metro.enable()
         self.rate.play()
+        # if a new script is executed, reset all boxes
         if self.LAST_EXC_SCRIPT != self.menu_panel._script_path and self.LAST_EXC_SCRIPT != "":
             for box in self.boxes_list:
                 box.disable(self.script_namespace)
         self.LAST_EXC_SCRIPT = self.menu_panel._script_path
     
     def _doStopScript(self):
-        self.status_bar.rec_btn.disable()
-        self.metroitem.Enable(False)
+        self.clip_monitor.stop()
+        self._disableButtons()
         self.menu_panel.metro.stop()
         self.menu_panel.metro.disable()
         self.rate.stop()
@@ -373,10 +406,19 @@ class PyoSynth(wx.Frame):
         self.patchWindow.clearObjects()
         #removing existing links between MidiControls and PyoObjs
         self.removeLinks()
+
+    def _enableButtons(self):
+        self.status_bar.rec_btn.enable()
+        self.metroitem.Enable(True)
+
+    def _disableButtons(self):
+        self.status_bar.rec_btn.disable()
+        self.metroitem.Enable(False)
+        self.virtual_keys_item.Enable(False)
         
-    #--------------------------------------------------
+    # --------------------------------------------------
     # Methodes de sauvegardes et d'ouverture de preset
-    #--------------------------------------------------
+    # --------------------------------------------------
     def savePreset(self, evt):
         preset = self.buildPreset()
         self.writePreset(self.menu_panel._script_path, preset)
@@ -557,7 +599,8 @@ class PyoSynth(wx.Frame):
                 val = preset[key]['val']
                 if val is not None:
                     valuesDict[key] = val
-        self.setPresetValues(valuesDict)
+        if not self.serverSetupPanel.isUsingVirtualKeys():
+            self.setPresetValues(valuesDict)
                 
     def setPresetValues(self, preset):
         """
@@ -613,8 +656,10 @@ class PyoSynth(wx.Frame):
     def __getitem__(self, i):
         if i == 'click':
             return self.menu_panel[i]
-        else:
-            return self.midiKeys[i]
+        if self.midiKeys.mode == 'virtual':
+            if i in ['noteon', 'noteoff']:
+                return self.virtual_keys[i]
+        return self.midiKeys[i]
     
     def setScale(self, ctl, min, max):
         self.midiKeys.setScale(ctl, min, max)
