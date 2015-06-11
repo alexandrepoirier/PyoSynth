@@ -37,6 +37,8 @@ BG_COLOUR = "#333333"
 STATS_BAR_HGT = 49
 SETUP_PANEL_HGT = 61
 TAB_WIN_HGT = 300
+MAX_RECENT_SCRIPTS = 10
+POLYPHONY = 10
 
 REC_FORMAT_DICT = {0:".wav",1:".aif",2:".au",3:"",4:".sd2",5:".flac",6:".caf",7:".ogg"}
 REC_FORMAT = 0

@@ -21,8 +21,15 @@ You should have received a copy of the GNU General Public License
 along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import wx, config, sys, traceback, pickle, os, time, interface
+import wx
+import config
+import sys
+import traceback
+import pickle
+import time
+import interface
 from pyo import midiToHz
+
 
 def getTransparentColour(alpha, *colours):
     """

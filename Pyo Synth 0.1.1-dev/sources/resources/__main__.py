@@ -34,62 +34,62 @@ class PyoSynth(wx.Frame):
         fstyle = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX)
         wx.Frame.__init__(self, parent=None, id=-1, title="Pyo Synth", pos=(200,200), size=size, style=fstyle)
         
-        #Variables generales
+        # Variables generales
         self.server = server
         self.script_namespace = namespace
-        #dernier ParamBox a avoir ete modifie
+        # dernier ParamBox a avoir ete modifie
         self._last_changed = None
         self.LAST_EXC_SCRIPT = ""
         self.warningWindowPos = (self.GetSize()[0]/2-50,config.UNIT_SIZE[1]-5+config.SETUP_PANEL_HGT)
         
-        #midi
+        # midi
         self.midiKeys = audio.MidiKeys(chnl, poly)
         # Clipping monitor
         self.clip_monitor = audio.ClipMonitor(.99, self.OnClip, 200)
         # clavier virtuel
         self.virtual_keys = VirtualKeyboard(config.DEFAULT_MAP_STYLE)
         
-        #PatchWindow
+        # PatchWindow
         self.patchWindow = PatchWindow(self, namespace)
-        #fenetre qui affiche les erreurs des scripts
+        # fenetre qui affiche les erreurs des scripts
         self.exc_win = PSExceptionWindow(self)
         
-        #Menu panel
+        # Menu panel
         self.menu_panel = MenuPanel(self, (0,0), (size[0],config.SETUP_PANEL_HGT), namespace)
         self.menu_panel.setAdsrCallbacks(self.midiKeys.getAdsrCallbacks())
         self.menu_panel.setAdsrValues(self.midiKeys.getAdsrValues())
         
-        #Status bar
+        # Status bar
         y = config.UNIT_SIZE[1]*self.rows+config.SETUP_PANEL_HGT
         self.status_bar = StatusBarPanel(self, (0,y), (size[0],config.STATS_BAR_HGT), self.server.getNchnls())
         server._server.setAmpCallable(self.status_bar.vu_meter)
-        
-        #ParamBoxes
+
+        # ParamBoxes
         self._createBoxes(numControls)
 
-        #server setup
+        # server setup
         self.serverSetupPanel = ServerSetupPanel(self, server)
         self.menu_panel.setServerPanel(self.serverSetupPanel)
         
-        #update the quick info zone
+        # update the quick info zone
         self.menu_panel.snd_card_ctrl.DoSetText(self.serverSetupPanel.getOutputInterface())
         self.menu_panel.updateSampRateBufSizeTxt()
         
-        #Rafraichissement ecran des valeurs
+        # Rafraichissement ecran des valeurs
         self.rate = Metro(config.REFRESH_RATE)
         self.trig_func = TrigFunc(self.rate, self._refresh)
-        
+
         self._onInit()
         
-        #MENU ITEMS
+        # MENU ITEMS
         menubar = wx.MenuBar()
         
         filemenu = wx.Menu()
-        saveitem = filemenu.Append(100, "Save Script\tCtrl+S","",wx.ITEM_NORMAL)
+        filemenu.Append(100, "Save Script\tCtrl+S","",wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU, self.savePreset, id=100)
-        saveasitem = filemenu.Append(101, "Save Script As\tCtrl+Shift+S","",wx.ITEM_NORMAL)
+        filemenu.Append(101, "Save Script As\tCtrl+Shift+S","",wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU, self.savePresetAs, id=101)
-        openitem = filemenu.Append(102, "Open Script\tCtrl+O","",wx.ITEM_NORMAL)
+        filemenu.Append(102, "Open Script\tCtrl+O","",wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU, self.menu_panel._openDialog, id=102)
         openrecent = wx.Menu()
         self._buildRecentScriptsMenu(openrecent, 400)
@@ -97,29 +97,29 @@ class PyoSynth(wx.Frame):
         self.exportitem = filemenu.Append(103, "Export as Samples\tCtrl+E","",wx.ITEM_NORMAL)
         self.exportitem.Enable(False)
         self.Bind(wx.EVT_MENU, self._exportScript, id=103)
-        preferences = filemenu.Append(wx.ID_PREFERENCES, "Preferences\tCtrl+P", "", wx.ITEM_NORMAL)
+        filemenu.Append(wx.ID_PREFERENCES, "Preferences\tCtrl+P", "", wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU, self.openPreferencesWin, id=wx.ID_PREFERENCES)
         menubar.Append(filemenu, "&File")
         
-        menu = wx.Menu()
-        self.runitem = menu.Append(200, "Run\tCtrl+R","",wx.ITEM_NORMAL)
+        mainmenu = wx.Menu()
+        self.runitem = mainmenu.Append(200, "Run\tCtrl+R","",wx.ITEM_NORMAL)
         self.runitem.Enable(False)
         self.Bind(wx.EVT_MENU, self.menu_panel.btn_run.ToggleState, id=200)
-        self.metroitem = menu.Append(201, "Click\tCtrl+C","",wx.ITEM_NORMAL)
+        self.metroitem = mainmenu.Append(201, "Click\tCtrl+C","",wx.ITEM_NORMAL)
         self.metroitem.Enable(False)
         self.Bind(wx.EVT_MENU, self.menu_panel.metro.OnClick, id=201)
-        excwinitem = menu.Append(202, "Open Error Log\tCtrl+L", "", wx.ITEM_NORMAL)
+        mainmenu.Append(202, "Open Error Log\tCtrl+L", "", wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU, self.exc_win.toggle, id=202)
-        sep = menu.AppendSeparator()
-        self.virtual_keys_item = menu.Append(203, "Enable computer keyboard\tCtrl+K", "", wx.ITEM_CHECK)
+        mainmenu.AppendSeparator()
+        self.virtual_keys_item = mainmenu.Append(203, "Enable computer keyboard\tCtrl+K", "", wx.ITEM_CHECK)
         self.virtual_keys_item.Enable(False)
         self.Bind(wx.EVT_MENU, self.toggleComputerKeyboard, id=203)
-        menubar.Append(menu, "&Menu")
+        menubar.Append(mainmenu, "&Menu")
         
         helpmenu = wx.Menu()
-        aboutitem = helpmenu.Append(wx.ID_ABOUT, "About","",wx.ITEM_NORMAL)
+        helpmenu.Append(wx.ID_ABOUT, "About","",wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU,self._about, id=wx.ID_ABOUT)
-        helpitem = helpmenu.Append(300, "Help\tCtrl+?","",wx.ITEM_NORMAL)
+        helpmenu.Append(300, "Help\tCtrl+?","",wx.ITEM_NORMAL)
         self.Bind(wx.EVT_MENU,self._help, id=300)
         menubar.Append(helpmenu, "&Help")
         
@@ -163,10 +163,10 @@ class PyoSynth(wx.Frame):
             self.status_bar.tracks_window._setPosition(self.GetPosition())
 
     def OnClip(self):
-        print '*Clip*'
+        self.status_bar.clip_light.turnOn()
 
     def _about(self, evt):
-        aboutbox = wx.AboutBox(self.aboutinfo)
+        wx.AboutBox(self.aboutinfo)
         
     def _help(self, evt):
         os.system('open '+config.HELP_DOC.replace(' ','\ '))
@@ -202,23 +202,41 @@ class PyoSynth(wx.Frame):
                     self.boxes_list.append(ParamBox(self,
                                                     (config.UNIT_SIZE[0]*j+margin, config.UNIT_SIZE[1]*i+config.SETUP_PANEL_HGT),
                                                     config.UNIT_SIZE,
-                                                    ["Unused", self.midiKeys.ctl_list[ctl]]))
+                                                    ["Unused", self.midiKeys.ctl_list[ctl]]
+                                                    )
+                                           )
+
     def _pauseMidiControl(self, ctlnum):
+        """
+        Appele par les boutons de l'enveloppe ADSR quand le mode midi est active.
+        """
         index = self.midiKeys.getIndexFromCtlNumber(ctlnum)
         self.midiKeys.ctl_list[index].pause(self.script_namespace)
         
     def _resumeMidiControl(self, ctlnum):
+        """
+        Appele par les boutons de l'enveloppe ADSR quand le mode midi est desactive.
+        """
         index = self.midiKeys.getIndexFromCtlNumber(ctlnum)
         self.midiKeys.ctl_list[index].resume(self.script_namespace)
         
     def enableMenuItems(self):
+        """
+        Appele quand un script est selectionne pour la premiere fois.
+        """
         self.runitem.Enable(True)
         self.exportitem.Enable(True)
     
     def addObject(self, name):
+        """
+        Ajoute les objets audio a la fenetre de patch quand le script est exectue.
+        """
         self.patchWindow.addObject(name)
         
     def removeLinks(self):
+        """
+        Retire tous les liens avec les MidiControl avant de supprimer les objets audio du script.
+        """
         for box in self.boxes_list:
             box.unlink(self.script_namespace)
     
@@ -278,9 +296,9 @@ class PyoSynth(wx.Frame):
             self.Unbind(wx.EVT_KEY_DOWN)
             self.Unbind(wx.EVT_KEY_UP)
     
-    # -----------------------------
-    # Methodes relatif a l'Export
-    # -----------------------------
+    # ------------------------------
+    # Methodes relatives a l'Export
+    # ------------------------------
     def _showExportDialog(self):
         if len(config.EXPORT_PREF) > 0:
             dialog = ExportWindow(self, config.EXPORT_PREF)
@@ -356,14 +374,14 @@ class PyoSynth(wx.Frame):
         Demarre le metronome seulement si en mode running.
         S'assure que le midiKeys focntionne si le serveur a change de parametres.
         """
-        # to do before running the script
+        # to do before running/stopping the script
         if evt.IsRunning():
             self._doPrepareToRunScript()
             self.serverSetupPanel.startServer()
         else:
             self._doStopScript()
             self.serverSetupPanel.stopServer()
-        # actually running the script
+        # actually running/stopping the script
         if self.menu_panel._runScript(evt) == -1:
             self.menu_panel.btn_run.ToggleState(evt)
             self._disableButtons()
@@ -475,7 +493,7 @@ class PyoSynth(wx.Frame):
         try:
             f = open(path, 'r')
         except IOError, e:
-            ##Affichage du message d'avertissement
+            # Affichage du message d'avertissement
             self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Could not save the patch...")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
@@ -497,7 +515,7 @@ class PyoSynth(wx.Frame):
             pprint.pprint(dict, f)
             f.write("\npyosynth.setPreset(preset)")
             f.close()
-            ##Affichage du message d'avertissement
+            # Affichage du message d'avertissement
             self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Patch saved")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
@@ -506,7 +524,7 @@ class PyoSynth(wx.Frame):
         try:
             f = open(source, 'r')
         except IOError, e:
-            ##Affichage du message d'avertissement
+            # Affichage du message d'avertissement
             self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Could not save the patch...")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
@@ -528,7 +546,7 @@ class PyoSynth(wx.Frame):
             pprint.pprint(dict, f)
             f.write("\npyosynth.setPreset(preset)")
             f.close()
-            ##Affichage du message d'avertissement
+            # Affichage du message d'avertissement
             self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Patch saved")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
@@ -540,14 +558,14 @@ class PyoSynth(wx.Frame):
             name, ext = name.split('.')
             name += '_bk.'
             path = os.path.join(path,name+ext)
-        except:
+        except Exception:
             return 1
 
         preset = self.buildPreset()
 
         try:
             f = open(self.menu_panel._script_path, 'r')
-        except:
+        except IOError:
             return 1
         else:
             script = f.readlines()
@@ -650,9 +668,9 @@ class PyoSynth(wx.Frame):
             exec attr+"= self.boxes_list[ctl].getMidiControl()" in self.script_namespace, locals()
             self.boxes_list[ctl].pyo_obj.setParamName(attr)
             
-    #--------------------------------------
+    # --------------------------------------
     # Methodes accessibles a l'utilisateur
-    #--------------------------------------
+    # --------------------------------------
     def __getitem__(self, i):
         if i == 'click':
             return self.menu_panel[i]

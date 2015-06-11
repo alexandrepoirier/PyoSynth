@@ -23,6 +23,7 @@ import config, buttons
 from audio import Click
 from controlsPyImg import *
 from pyo import Midictl, Change, TrigFunc, CtlScan
+from threading import Timer
 
 class PSTextCtrl(wx.Control):
     def __init__(self, parent, pos, text):
@@ -517,7 +518,55 @@ class VuMeter(wx.Panel):
     
     def OnClose(self, evt):
         self.Destroy()
-        
+
+
+class ClipLight(wx.Panel):
+    """
+    class ClipLight(wx.Panel)
+
+    parametres:
+                parent : fenetre parent, wx.Window
+                pos : position relative a la fenetre parent
+                timeout : temps en secondes avant que le voyant s'eteigne
+    """
+    def __init__(self, parent, pos, timeout):
+        wx.Panel.__init__(self, parent, -1, pos, (19,19), style=wx.NO_BORDER)
+
+        self._timeout = timeout
+        self._IS_ON = False
+        self.off_bmp = clip_light_off.GetBitmap()
+        self.on_bmp = clip_light_on.GetBitmap()
+        self._timer = None
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+    def OnPaint(self, evt):
+        dc = wx.PaintDC(self)
+
+        if self._IS_ON:
+            dc.DrawBitmap(self.on_bmp,0,0)
+        else:
+            dc.DrawBitmap(self.off_bmp,0,0)
+
+    def turnOn(self):
+        self._IS_ON = True
+
+        if self._timer is None:
+            self._timer = Timer(self._timeout, self._turnOff)
+            self._timer.start()
+        else:
+            self._timer.cancel()
+            self._timer = Timer(self._timeout, self._turnOff)
+            self._timer.start()
+
+        wx.CallAfter(self.Refresh)
+
+    def _turnOff(self):
+        self._IS_ON = False
+        self._timer = None
+        wx.CallAfter(self.Refresh)
+
+
 class TrackProgressionBar(wx.Control):
     def __init__(self, parent, pos):
         wx.Control.__init__(self, parent, -1, pos, (100,5))

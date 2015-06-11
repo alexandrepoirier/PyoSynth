@@ -21,13 +21,16 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from pyo import *
-import resources, wx, sys
+import resources
+import wx
+import sys
 from resources.utils import _repExcMkf
+from resources.config import POLYPHONY
 
 sys.excepthook = _repExcMkf
 
 s = Server().boot()
 app = wx.App(False)
-pyosynth = resources.PyoSynth(s, locals(), poly=10)
+pyosynth = resources.PyoSynth(s, locals(), poly=POLYPHONY)
 pyosynth.Show()
 app.MainLoop()

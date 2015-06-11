@@ -31,8 +31,6 @@ import wx
 
 import psutil
 
-
-
 # PyoSynth custom modules import
 import audio
 import buttons
@@ -93,11 +91,11 @@ class RecordedTrackElement(wx.Panel):
         dc = wx.PaintDC(self)
 
         # draw background
-        colour = None
-        if (self._hover or self._selected):
+        if self._hover or self._selected:
             colour = wx.Colour(90, 90, 90, 255)
         else:
             colour = wx.Colour(90, 90, 90, 20)
+
         dc.SetBrush(wx.Brush(colour))
         dc.SetPen(wx.Pen(colour, 1))
         dc.DrawRectangle(0, 0, w, h)
@@ -898,6 +896,15 @@ class ServerSetupPanel(wx.Panel):
 
 
 class PatchWindow(wx.Frame):
+    """
+    Affiche une liste de tous les objets audio controlable present dans le script en cours d'execution.
+    Accede au dictionnaire PARAMS_TREE_DICT pour determiner l'admissibilite d'un objet particulier.
+
+    parametres:
+                parent : fenetre parent, wx.Window
+                namespace : reference au namespace le plus global (ou s'execute les scripts audio)
+                            utilise pour realiser le lien entre les objets audio et le controleur
+    """
     def __init__(self, parent, namespace):
         wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
         self.SetTransparent(0)
@@ -956,6 +963,7 @@ class PatchWindow(wx.Frame):
         try:
             PARAMS_TREE_DICT[obj.__class__.__name__]
         except Exception:
+            # quitte la fonction si l'element ne fait pas parti des objets audio controlable
             return
         item = self.treeCtrl.AppendItem(self.root, name + ' - ' + obj.__class__.__name__)
         self.treeCtrl.SetPyData(item, obj)
@@ -1152,20 +1160,22 @@ class ParamBoxSettingsWindow(wx.Frame):
     """
     class ParamBoxSettingWindow
     
-    parametres
-        pos : position de la fenetre sur l'ecran
-        params : liste des parametre courant de l'objet pyo
-                 [min, max, port, exp, text]
+    parametres:
+                parent : fenetre parent, wx.Window
+                pos : position de la fenetre sur l'ecran
+                params : liste des parametre courant de l'objet pyo
+                         [min, max, port, exp, text]
+                func : fonction _setParams du PAramBox concerne
     """
 
-    def __init__(self, parent, pos, params, callable):
+    def __init__(self, parent, pos, params, func):
         self.parent = parent
         wx.Frame.__init__(self, None, -1, pos=pos, size=(120, 172), style=wx.NO_BORDER | wx.STAY_ON_TOP)
         self.SetTransparent(245)
         self.panel = wx.Panel(self, -1, size=self.GetSize() + (1, 1))
 
         self._min, self._max, self._port, self._exp, self._text, self._prec, self._int = params
-        self.callable = callable
+        self.callable = func
 
         # Positions
         self.leftMargin = 10
@@ -1236,7 +1246,6 @@ class ParamBoxSettingsWindow(wx.Frame):
         self.panel.Bind(wx.EVT_CHECKBOX, self.setFloor, self.intCheck)
 
     def OnPaint(self, evt):
-        w, h = self.GetSize()
         dc = wx.PaintDC(self.panel)
 
         # draw bg
@@ -1275,12 +1284,16 @@ class ParamBoxSettingsWindow(wx.Frame):
         try:
             self._min = float(self.minCtrl.GetValue().replace(',', '.'))
         except:
+            # ne fait rien si le texte entre n'est pas un chiffre
+            # -> l'ancienne valeur est conservee
             pass
 
     def setMax(self, evt):
         try:
             self._max = float(self.maxCtrl.GetValue().replace(',', '.'))
         except:
+            # ne fait rien si le texte entre n'est pas un chiffre
+            # -> l'ancienne valeur est conservee
             pass
 
     def setPort(self, evt):
@@ -1321,7 +1334,8 @@ class WheelsBox(wx.Panel):
     def _scaleTranspo(self, value, range):
         try:
             semi = math.log(value, 2) * 12
-        except:
+        except ValueError:
+            # considere le cas ou log(0) cause une erreur
             return 0
 
         if semi > range:
@@ -1352,8 +1366,8 @@ class WheelsBox(wx.Panel):
         dc.SetBrush(wx.Brush(self.active_fill_color))
         dc.SetPen(wx.Pen(self.active_fill_color, 1))
 
-        ##Draw reference bars
-        ##Bend wheel
+        # Draw reference bars
+        # Bend wheel
         y = math.ceil(
             self.bbox_center - (self.bbox_half_travel * self._scaleTranspo(self.bend_obj.get(), self.bend_obj._brange)))
         points = [(self.bbox_x1, self.bbox_center),
@@ -1361,11 +1375,11 @@ class WheelsBox(wx.Panel):
                   (self.bbox_x2, y),
                   (self.bbox_x2, self.bbox_center)]
         dc.DrawPolygon(points)
-        ##Mod wheel
+        # Mod wheel
         height = math.ceil(self.box_height * self.mod_obj.get())
         y = self.y2 - height
         dc.DrawRectangle(self.mbox_x1, y, self.mbox_width, height)
-        ##Ben wheel middle line
+        # Bend wheel middle line
         dc.GetPen().SetWidth(2)
         dc.DrawLine(self.bbox_x1, self.bbox_center - 1, self.bbox_x2, self.bbox_center - 1)
 
@@ -1383,29 +1397,39 @@ class WheelsBox(wx.Panel):
 
 
 class BoxBase(wx.Panel):
+    """
+    class BoxBase(wx.Panel)
+
+    Definit les paramtres de base d'une ParamBox.
+
+    parametres :
+                parent : fenetre parent (fenetre principale), wx.Window
+                pos : position relative au cadre principal en pixel
+                size : grosseur, tuple (w,h)
+    """
     def __init__(self, parent, pos, size):
         wx.Panel.__init__(self, parent, -1, pos=pos, size=size)
 
-        ##bitmaps
+        # bitmaps
         self.active_bg = imgs.param_box_active_bg.GetBitmap()
         self.inactive_bg = imgs.param_box_inactive_bg.GetBitmap()
 
-        ##colours
+        # colours
         self.active_color = "#d8ff00"
         self.inactive_color = "#f0f4d7"
         self.active_fill_color = (216, 255, 0, 51)
         self.inactive_fill_color = (240, 244, 215, 38)
 
-        ##Variables generales
+        # Variables generales
         self.parent = parent
         self.width, self.height = size
 
-        ##Variables pour le MatchMode
+        # Variables pour le MatchMode
         self.MATCH_MODE = False
         self.preset_value = None
         self.match_prec = .02
 
-        ##Variables d'etat
+        # Variables d'etat
         self.MIDI_LEARN = False
         self.settingsWindow = None
 
@@ -1427,10 +1451,13 @@ class BoxBase(wx.Panel):
 
 class ParamBox(BoxBase):
     """
-    class ParamBox
+    class ParamBox(BoxBase)
     
     parametres :
-        - list : [ text, MidiControl (, float_precision) ]
+                parent : fenetre parent, wx.Window
+                pos : position relative au cadre principal, c-a-d le parent
+                size : taille en pixel de la boite (w,h)
+                list : [ text, MidiControl (, float_precision) ]
     """
 
     def __init__(self, parent, pos, size, list):
@@ -1458,8 +1485,8 @@ class ParamBox(BoxBase):
                                      wx.FONTWEIGHT_BOLD)
 
         # state variable
-        self.IDLE = False
-        self.UNUSED = True
+        self.IDLE = False # True quand le dessin est a jour et que la boite n'est pas en train d'etre modifiee
+        self.UNUSED = True # False aussitot que 'parent.last_changed' est assignee a self
 
         # empty bitmap to store a snapshot of the parambox if idle
         self.buffer = wx.EmptyBitmap(size[0], size[1])
@@ -1478,14 +1505,18 @@ class ParamBox(BoxBase):
                 self.settingsWindow.SetPosition(pos)
 
     def OnPaint(self, evt):
+        """
+        Decide si la fenetre doit etre dessinee a nouveau.
+        Autrement, utilise le buffer en memoire.
+        """
         dc = wx.BufferedPaintDC(self, self.buffer)
-        ##La boite de controle est inutilisee
+        # La boite de controle est inutilisee
         if self.UNUSED:
             self.OnPaintUnused(dc)
-        ##La boite de controle est utilisee
+        # La boite de controle est utilisee
         else:
             value = self.pyo_obj.get()
-            ##Verifie si le carre doit etre dessine actif ou inactif
+            # Verifie si le carre doit etre dessine actif ou inactif
             if value != self.last_value or self.parent._last_changed == self or self.MATCH_MODE or self.MIDI_LEARN:
                 self.OnPaintActive(dc, value)
             else:
@@ -1505,6 +1536,10 @@ class ParamBox(BoxBase):
             dc.DrawText(self.text, x, y)
 
     def OnPaintActive(self, dc, value):
+        """
+        Routine de dessin principal.
+        Tient compte de tous les modes : MIDI_LEARN, MATCH_MODE et normal
+        """
         self.parent._last_changed = self
         self.IDLE = False
         # basic active style
@@ -1610,9 +1645,9 @@ class ParamBox(BoxBase):
                 # le timer permet d'eviter que la PatchWindow s'ouvre
                 # chaque fois qu'on ferme la boite de settings
                 # ou qu'on desactive le Midi Learn
-                later = wx.CallLater(10, self._destroySettingsWindow)
+                wx.CallLater(10, self._destroySettingsWindow)
             if self.MIDI_LEARN:
-                later = wx.CallLater(10, self._toggleMidiLearn)
+                wx.CallLater(10, self._toggleMidiLearn)
         self.ShowPatchWindow(evt)
 
     def OnQuit(self, evt):
@@ -1701,7 +1736,7 @@ class StatusBarPanel(wx.Panel):
         wx.Panel.__init__(self, parent, -1, pos, size)
 
         # vu meter x pos
-        self.vm_x = parent.GetSize()[0] - 242 - 15
+        self.vm_x = parent.GetSize()[0] - 265
         # master volume x pos
         self.mv_x = parent.GetSize()[0] / 2 - 80
         # rec section
@@ -1726,6 +1761,9 @@ class StatusBarPanel(wx.Panel):
         # vu meter object
         self.vu_meter = controls.VuMeter(self, (self.vm_x, 13), numChnls)
         self.setVuMeterPosition(numChnls)
+        # clip light object
+        x = parent.GetSize()[0]-23
+        self.clip_light = controls.ClipLight(self, (x, 17), .4)
 
         # CPU & RAM usage infos
         self.totalMem = psutil.virtual_memory()[0]
@@ -1988,14 +2026,20 @@ class MenuPanel(wx.Panel):
             self.GetParent().enableMenuItems()
 
     def _addPathToRecent(self):
+        """
+        Ajoute un chemin d'Acces a la liste de ceux ouvert recemment.
+        Si le chemin est deja dans la liste, il ne fait que remonter
+        en premiere position.
+        """
         try:
+            # verifie si le chemin est deja dans la liste et si oui, le retire
             index = config.RECENT_SCRIPTS.index(self._script_path)
             config.RECENT_SCRIPTS.pop(index)
-        except:
+        except ValueError:
             pass
         finally:
             config.RECENT_SCRIPTS.insert(0, self._script_path)
-            if len(config.RECENT_SCRIPTS) > 10:
+            if len(config.RECENT_SCRIPTS) > config.MAX_RECENT_SCRIPTS:
                 config.RECENT_SCRIPTS.pop(-1)
 
     def _runScript(self, evt):
@@ -2023,7 +2067,7 @@ class MenuPanel(wx.Panel):
             self._getScriptVars()
             # add pyo objects to the PatchWindow
             for obj in self.pyo_objs:
-                self.GetParent().patchWindow.addObject(obj)
+                self.GetParent().addObject(obj)
             # updating basic stuff
             self.btn_open.disable()
             self.server_setup_btn.disable()
@@ -2043,7 +2087,8 @@ class MenuPanel(wx.Panel):
         for obj in self.pyo_objs:
             try:
                 self.pyo_objs[obj].stop()
-            except:
+            except AttributeError:
+                # certains objets pyo n'ont pas de methode stop()
                 pass
             string = "del %s" % obj
             exec string in self.script_namespace
@@ -2352,23 +2397,24 @@ class CrashDialog(wx.Dialog):
     def GetComments(self):
         return self._comments.GetValue().encode('utf_8')
 
+
 class VirtualKeyboard:
     def __init__(self, style):
         self.map_style = style
 
         self.octave = 5
         self.min_octave = 0
-        self.max_octave = 11-config.mapping_styles[style][0]
-        self.amp = .7 # value of the amplitude
+        self.max_octave = 11 - config.mapping_styles[style][0]
+        self.amp = .7  # value of the amplitude
         self.sustain = False
 
-        self.callback = None # to be defined by setCallback
-        self.poly = -1 # to be defined by setPoly with all the variables below
-        self.keys = [] # stores which keys are pressed
-        self.notes = [] # stores what frequencies are played
-        self.sus_pressed = [] # stores the keys that are sustained which didn't send the KeyUp event
-        self.trigNoteOn = [] # streams for the note on event
-        self.trigNoteOff = [] # streams for the note off event
+        self.callback = None  # to be defined by setCallback
+        self.poly = -1  # to be defined by setPoly with all the variables below
+        self.keys = []  # stores which keys are pressed
+        self.notes = []  # stores what frequencies are played
+        self.sus_pressed = []  # stores the keys that are sustained which didn't send the KeyUp event
+        self.trigNoteOn = []  # streams for the note on event
+        self.trigNoteOff = []  # streams for the note off event
 
         self.mapping = self.buildMapping()
 
@@ -2424,8 +2470,10 @@ class VirtualKeyboard:
 
     def addKey(self, key):
         try:
+            # essai de trouver une voix de libre
             index = self.keys.index(0)
-        except:
+        except ValueError:
+            # si aucune voix de libre, on quitte la fonction
             return
         else:
             if self.sustain:
@@ -2436,10 +2484,10 @@ class VirtualKeyboard:
 
     def setPoly(self, value):
         self.poly = value
-        self.keys = [0 for i in range(self.poly)]
-        self.notes = [0 for i in range(self.poly)]
-        self.trigNoteOn = [Trig() for i in range(self.poly)]
-        self.trigNoteOff = [Trig() for i in range(self.poly)]
+        self.keys = [0]*self.poly
+        self.notes = [0]*self.poly
+        self.trigNoteOn = [Trig()]*self.poly
+        self.trigNoteOff = [Trig()]*self.poly
 
     def setCallback(self, func):
         self.callback = func
@@ -2490,5 +2538,5 @@ class VirtualKeyboard:
 
     def setMappingStyle(self, style):
         self.map_style = style
-        self.max_octave = 11-config.mapping_styles[self.map_style][0]
-        self.mapping = buildMapping()
+        self.max_octave = 11 - config.mapping_styles[self.map_style][0]
+        self.mapping = self.buildMapping()
