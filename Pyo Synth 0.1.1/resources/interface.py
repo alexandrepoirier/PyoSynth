@@ -682,7 +682,10 @@ class ServerSetupPanel(wx.Panel):
             if pref['midi_output'] not in pm_get_output_devices()[1]:
                 pref['midi_output'] = pm_get_default_output()
             if pref['midi_input'] not in pm_get_input_devices()[1]:
-                pref['midi_input'] = pm_get_default_input()
+                default_in = pm_get_default_input()
+                if default_in == -1:
+                    self.USING_VIRTUAL_KEYS = True
+                pref['midi_input'] = default_in
             return pref
 
     def savePreferences(self):
@@ -2486,8 +2489,8 @@ class VirtualKeyboard:
         self.poly = value
         self.keys = [0]*self.poly
         self.notes = [0]*self.poly
-        self.trigNoteOn = [Trig()]*self.poly
-        self.trigNoteOff = [Trig()]*self.poly
+        self.trigNoteOn = [Trig() for i in range(self.poly)]
+        self.trigNoteOff = [Trig() for i in range(self.poly)]
 
     def setCallback(self, func):
         self.callback = func
