@@ -6,5 +6,14 @@ Pyo Synth is an open source application that makes the manipulation of pyo scrip
 
 You can download the dmg on Source Forge : https://sourceforge.net/projects/pyosynth
 
+<b>Version 0.1.1</b></br>
+- Lots of bug fixes
+- Window priority problem fixed
+- ‘Save As’ feature added
+- Option to chose a midi device in the server setup panel added
+- ’99 : All devices’ option added for midi input
+- The computer keyboard can be used to play as a midi keyboard
+- A peak light for the ‘mix’ object has been added on the interface
+
 <b>Version 0.1.0b</b></br>
 This is the first release and it is a beta version.
