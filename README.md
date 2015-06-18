@@ -4,7 +4,7 @@ License : GNU GPL v3
 
 Pyo Synth is an open source application that makes the manipulation of pyo scripts easier by letting you control it with a midi keyboard. The interface allows you to setup every control on your keyboard and link them to parameters in your script during runtime. It is also possible to save your progress directly in the pyo script. See manual for more explanation on features.
 
-Only a Mac version is available for the moment, but Windows and Linux versions should be made available in the future.
+It only works on Mac for the moment, but it should be adapted for Windows and Linux anytime in the future.
 
 You can download the dmg on Source Forge : https://sourceforge.net/projects/pyosynth
 
