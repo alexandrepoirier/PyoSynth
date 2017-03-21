@@ -34,10 +34,10 @@ You can download the dmg on Source Forge : https://sourceforge.net/projects/pyos
 - stabilized the program. Less crashes occur when starting/stopping scripts multiple times.
 - fixed a bug where the VuMeter crashed the program due to math.log returning infinite as a value
 - clicks when recording tracks were due to the use of the Record object. Now replaced with a 5 minute long table. Uses more RAM, but no more clicks. Note: max duration will eventually become a preference.
-- wrapped a lot of wxPython method calls in wx.CallAfter() to be ahead safe
+- wrapped a lot of wxPython method calls in wx.CallAfter() to be thread safe
 - when no midi keyboard was plugged, the server panel crashed the program
 - Optimized the WheelsBox OnPaint method so it uses a BufferedPaintDC
-- MathMode tweaked to facilitate its use. It accepts a wider range of values using the formula: val-(range/128) <= x >= val+(range/128)
+- MatchMode tweaked to facilitate its use. It accepts a wider range of values using the formula: val-(range/128) <= x >= val+(range/128)
 - In the record options window, the midi range did not show correct values when loading preferences
 - Optimized the virtual keyboard class. Voices are now managed better.
 - When deleting a recording, the file is sent to trash instead of brutally erasing the file.
@@ -48,7 +48,7 @@ You can download the dmg on Source Forge : https://sourceforge.net/projects/pyos
 - Midi input output choices added in the server window
 - script execution methods moved in the __main__
 - server is now marked dirty when making a change. Reinitialization happens when running a new script
-- PYOSYTNH_PREF now saves polyphony, bend wheel range, mono type and the number of ParamBoxes (will eventually become a preference)
+- PYOSYNTH_PREF now saves polyphony, bend wheel range, mono type and the number of ParamBoxes (will eventually become a preference)
 - when reinitializing a ParamBox, all its values are now reset
 - Added debug info in the python interpreter
 
