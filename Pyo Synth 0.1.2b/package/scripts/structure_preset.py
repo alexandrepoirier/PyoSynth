@@ -1,0 +1,30 @@
+preset = {0:{'master':0.6,
+             'adsr':(.01,.02,.8,.2)
+            },
+          1:{'name':"Saw Detune",
+             'min':0,
+             'max':1,
+             'port':False,
+             'exp':False,
+             'floor',False,
+             'dB':False,
+             'prec':1,
+             'attr':'saw1.detune',
+             'val':0.52,
+             'norm_val':0.52,
+             'ctlnum':74
+            },
+          2:{'name':"Saw Vol",
+             'min':0,
+             'max':1,
+             'port':False,
+             'exp':False,
+             'floor':False,
+             'dB':True,
+             'prec':1,
+             'attr':'saw1.mul',
+             'val':0.8,
+             'norm_val':0.8,
+             'ctlnum':70
+            }
+         }
