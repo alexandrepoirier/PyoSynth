@@ -71,6 +71,8 @@ def installationProcess():
         printMessage("Couldn't find tutorials folder", 2)
 
 
+    printMessage("Copying manual", 0)
+    shutil.copy(os.path.join(CWD, package, 'manuel_dutilisation_pyosynth.pdf'), os.path.join(PREF_PATH, 'manuel_dutilisation_pyosynth.pdf'))
     printMessage("Building pyo objects dictionary...", 0)
     execfile(os.path.join(CWD, 'package', 'scripts','objects_inspector.py'), globals())
     printMessage("Moving dictionary", 0)
