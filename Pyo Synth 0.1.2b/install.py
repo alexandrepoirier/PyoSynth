@@ -25,7 +25,7 @@ import os
 import time
 import pickle
 import shutil
-from sources.resources.config import *
+from resources.config import *
 
 MSG_KEYW = {0:'INFO',1:'WARNING',2:'ERROR'}
 def printMessage(text, level=0):
@@ -36,9 +36,8 @@ def validateVersions():
     import sys
     from pyo import getVersion
     import wxversion
-    if sys.version_info[:3] != VERSIONS['python']:
-        printMessage("python {}.{}.{} must be used to run Pyo Synth from sources".format(*VERSIONS['python']), 2)
-        exit()
+    if sys.version_info[0] > VERSIONS['python'][0]:
+        printMessage("python {}.x must be used to run Pyo Synth from sources".format(VERSIONS['python'][0]), 2)
     if getVersion() != VERSIONS['pyo']:
         printMessage("pyo version installed: {}.{}.{} ; pyo version required {}.{}.{}".format(*getVersion()+VERSIONS['pyo']), 1)
         printMessage("Installed pyo version doesn't match what Pyo Synth uses. Some objects might not be available.", 1)
@@ -72,7 +71,7 @@ def installationProcess():
 
 
     printMessage("Copying manual", 0)
-    shutil.copy(os.path.join(CWD, package, 'manuel_dutilisation_pyosynth.pdf'), os.path.join(PREF_PATH, 'manuel_dutilisation_pyosynth.pdf'))
+    shutil.copy(os.path.join(CWD, 'package', 'manuel_dutilisation_pyosynth.pdf'), os.path.join(PREF_PATH, 'manuel_dutilisation_pyosynth.pdf'))
     printMessage("Building pyo objects dictionary...", 0)
     execfile(os.path.join(CWD, 'package', 'scripts','objects_inspector.py'), globals())
     printMessage("Moving dictionary", 0)
