@@ -22,16 +22,19 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import wx
-import config
+import PSConfig
 import sys
 import subprocess
 import traceback
 import pickle
 import time
-import interface
+import PSInterface
 import math
-from pyo import midiToHz
-from math import log10, pow
+
+if PSConfig.PLATFORM == 'linux2':
+    from pyo64 import midiToHz
+else:
+    from pyo import midiToHz
 
 
 def getTransparentColour(alpha, *colours):
@@ -79,22 +82,22 @@ def checkExtension(path, ext):
             return path
             
 def _repExcMkf(type, value, tb):
-    config.hide_main_win()
-    info = [time.strftime("%H:%M:%S, %d-%m-%Y"), config.VERSIONS['Pyo Synth']]
+    PSConfig.hide_main_win()
+    info = [time.strftime("%H:%M:%S, %d-%m-%Y"), PSConfig.VERSIONS['Pyo Synth']]
     info.append(''.join(traceback.format_exception(type,value,tb)))
-    code = config.crash_save_func()
+    code = PSConfig.crash_save_func()
     if code == 1:
         msg = u"Ouppss! PyoSynth a planté sans crier gare...\nVous pouvez fournir des informations pour nous aider à régler le problème dans l'espace ci-dessous."
     else:
         msg = u"Ouppss! PyoSynth a planté sans crier gare, mais nous avons été capable de sauvegarder votre projet à l'emplacement suivant : %s\n\nVous pouvez fournir des informations pour nous aider à régler le problème dans l'espace ci-dessous."%code
-    dlg = interface.CrashDialog(msg, u'PyoSynth a généré une erreur.')
+    dlg = PSInterface.CrashDialog(msg, u'PyoSynth a généré une erreur.')
     dlg.Center()
     dlg.ShowModal()
     info.append(dlg.GetComments())
     dlg.Destroy()
-    with open(config.REP_FL_LOG, 'w') as f:
+    with open(PSConfig.REP_FL_LOG, 'w') as f:
         pickle.dump(info, f)
-    openSysFileBrowser(config.REP_FL_LOG) # to remove before release
+    openSysFileBrowser(PSConfig.REP_FL_LOG) # to remove before release
     sys.exit()
 
 def ampTodB(x, prec):
@@ -113,9 +116,9 @@ def openSysFileBrowser(path):
         subprocess.call(["open", "-R", path])
 
 def printMessage(text, level=0):
-    if level <= config.VERBOSE_LVL:
+    if level <= PSConfig.VERBOSE_LVL:
         tclock = "%.2f" % (time.clock()%1)
-        print "[%s.%s][%s] %s" % (time.strftime("%H:%M:%S"), tclock.split('.')[1], config.VERBOSE_KW_LVL[level], text)
+        print "[%s.%s][%s] %s" % (time.strftime("%H:%M:%S"), tclock.split('.')[1], PSConfig.VERBOSE_KW_LVL[level], text)
     else:
         return
 

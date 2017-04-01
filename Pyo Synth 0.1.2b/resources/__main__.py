@@ -18,23 +18,28 @@ You should have received a copy of the GNU General Public License
 along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pyo import Metro, TrigFunc, class_args, CallAfter
-from interface import *
-import utils
-import audio
+from PSInterface import *
+import PSUtils
+import PSAudio
 import pprint
 import pickle
 import os
 import time
-import config
+import PSConfig
 import re
 import gc
 
+if PSConfig.PLATFORM == 'linux2':
+    from pyo64 import Metro, TrigFunc, class_args, CallAfter
+else:
+    from pyo import Metro, TrigFunc, class_args, CallAfter
+
+
 class PyoSynth(wx.Frame):
-    def __init__(self, server, namespace, chnl=0, numControls=config.PYOSYNTH_PREF['num_ctls']):
+    def __init__(self, server, namespace, chnl=0, numControls=PSConfig.PYOSYNTH_PREF['num_ctls']):
         size = self._getSize(numControls)
         fstyle = wx.DEFAULT_FRAME_STYLE & ~ (wx.RESIZE_BORDER | wx.RESIZE_BOX | wx.MAXIMIZE_BOX)
-        wx.Frame.__init__(self, parent=None, id=-1, title="Pyo Synth - v%s" % config.VERSIONS['Pyo Synth'], pos=(200,200), size=size, style=fstyle)
+        wx.Frame.__init__(self, parent=None, id=-1, title="Pyo Synth - v%s" % PSConfig.VERSIONS['Pyo Synth'], pos=(200, 200), size=size, style=fstyle)
         self._base_panel = wx.Panel(self, id=-1, pos=(0,0), size=size)
 
         # Variables generales
@@ -53,8 +58,8 @@ class PyoSynth(wx.Frame):
         self.LAST_EXC_SCRIPT = ""
         # petite fenetre qui affiche des messages d'avertissement
         self.warningWindow = None
-        self.warningWindowPos = ( (self.GetSize()[0]/2) - (WarningWindow.min_size[0]/2),
-                                  config.SETUP_PANEL_HGT + config.UNIT_SIZE[1] - 5 )
+        self.warningWindowPos = ((self.GetSize()[0]/2) - (WarningWindow.min_size[0]/2),
+                                 PSConfig.SETUP_PANEL_HGT + PSConfig.UNIT_SIZE[1] - 5)
         # variable pour stocker le chemin d'acces au script
         self._script_path = ""
         # variable d'etat du script
@@ -68,11 +73,11 @@ class PyoSynth(wx.Frame):
         self._kb_focus_white_list = []
         
         # midi
-        self.midiKeys = audio.MidiKeys(numControls, chnl)
+        self.midiKeys = PSAudio.MidiKeys(numControls, chnl)
         # Clipping monitor
-        self.clip_monitor = audio.ClipMonitor(.99, self.OnClip, 200)
+        self.clip_monitor = PSAudio.ClipMonitor(.99, self.OnClip, 200)
         # clavier virtuel
-        self.virtual_keys = VirtualKeyboard(config.DEFAULT_MAP_STYLE)
+        self.virtual_keys = VirtualKeyboard(PSConfig.DEFAULT_MAP_STYLE)
         
         # PatchWindow
         self.patchWindow = PatchWindow(self, namespace)
@@ -84,13 +89,13 @@ class PyoSynth(wx.Frame):
         self._addToWhiteList(self.exc_win.getWhiteListItems())
         
         # Menu panel
-        self.menu_panel = MenuPanel(self, (0,0), (size[0],config.SETUP_PANEL_HGT))
+        self.menu_panel = MenuPanel(self, (0,0), (size[0], PSConfig.SETUP_PANEL_HGT))
         self.menu_panel.setAdsrCallbacks(self.midiKeys.getAdsrCallbacks())
         self.menu_panel.setAdsrValues(self.midiKeys.getAdsrValues())
 
         # Status bar
-        y = config.UNIT_SIZE[1]*self.rows+config.SETUP_PANEL_HGT
-        self.status_bar = StatusBarPanel(self, (0,y), (size[0],config.STATS_BAR_HGT), self._server_.getNchnls())
+        y = PSConfig.UNIT_SIZE[1] * self.rows + PSConfig.SETUP_PANEL_HGT
+        self.status_bar = StatusBarPanel(self, (0,y), (size[0], PSConfig.STATS_BAR_HGT), self._server_.getNchnls())
         server._server.setAmpCallable(self.status_bar.vu_meter)
 
         # ParamBoxes
@@ -105,7 +110,7 @@ class PyoSynth(wx.Frame):
         self.menu_panel.updateSampRateBufSizeTxt()
         
         # Rafraichissement ecran des valeurs
-        self.rate = Metro(config.REFRESH_RATE)
+        self.rate = Metro(PSConfig.REFRESH_RATE)
         self.trig_func = TrigFunc(self.rate, self._mainRefreshLoop)
 
         
@@ -216,10 +221,10 @@ class PyoSynth(wx.Frame):
         # section about
         self.aboutinfo = wx.AboutDialogInfo()
         self.aboutinfo.SetCopyright(u"\xa92015-2017 Alexandre Poirier")
-        self.aboutinfo.SetDescription("Built: %s\n\nPyo Synth is an interface to help with live manipulation of synthesizer scripts written with pyo."%config.BUILD_DATE)
+        self.aboutinfo.SetDescription("Built: %s\n\nPyo Synth is an interface to help with live manipulation of synthesizer scripts written with pyo." % PSConfig.BUILD_DATE)
         self.aboutinfo.SetDevelopers(["Alexandre Poirier"])
         self.aboutinfo.SetName("Pyo Synth")
-        self.aboutinfo.SetVersion(config.VERSIONS['Pyo Synth'])
+        self.aboutinfo.SetVersion(PSConfig.VERSIONS['Pyo Synth'])
         
         # binding events
         self.Bind(wx.EVT_MOVE, self.OnMove)
@@ -229,16 +234,19 @@ class PyoSynth(wx.Frame):
         self.Bind(EVT_BUFSIZE_CHANGED, self._updateSampRateBfsTextByEvent)
         self.Bind(EVT_NCHNLS_CHANGED, self._updateNchnlsByEvent)
         self.Bind(EVT_VIRTUAL_KEYS_CHANGED, self._onVirtualKeysChangeByEvent)
-        self.Bind(buttons.EVT_BTN_RUN, self._toggleRunStateByEvent)
+        self.Bind(PSButtons.EVT_BTN_RUN, self._toggleRunStateByEvent)
         self.Bind(EVT_SAVE_TRACK, self._createSaveTrackDialogByEvent)
-        self.menu_panel.btn_open.Bind(buttons.EVT_BTN_CLICKED, self._openDialogByEvent)
-        self.menu_panel.btn_save.Bind(buttons.EVT_BTN_CLICKED, self.savePresetByEvent)
-        self.menu_panel._attackKnob.Bind(controls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
-        self.menu_panel._decayKnob.Bind(controls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
-        self.menu_panel._sustainKnob.Bind(controls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
-        self.menu_panel._releaseKnob.Bind(controls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
+        self.menu_panel.btn_open.Bind(PSButtons.EVT_BTN_CLICKED, self._openDialogByEvent)
+        self.menu_panel.btn_save.Bind(PSButtons.EVT_BTN_CLICKED, self.savePresetByEvent)
+        self.menu_panel._attackKnob.Bind(PSControls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
+        self.menu_panel._decayKnob.Bind(PSControls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
+        self.menu_panel._sustainKnob.Bind(PSControls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
+        self.menu_panel._releaseKnob.Bind(PSControls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
 
         self._setPreferences()
+        # hack to get all widgets to refresh and draw their parents background
+        wx.CallLater(100, self.Refresh)
+        wx.CallLater(150, self.Refresh)
     #end __init__
 
 ##### --------------------
@@ -276,14 +284,14 @@ class PyoSynth(wx.Frame):
 
     def Show(self):
         self._printPyoVersion()
-        utils.printMessage("Ready", 0)
+        PSUtils.printMessage("Ready", 0)
         return wx.Frame.Show(self)
 
     def _about(self, evt):
         wx.AboutBox(self.aboutinfo)
         
     def _help(self, evt):
-        os.system('open '+config.HELP_DOC.replace(' ','\ '))
+        os.system('open ' + PSConfig.HELP_DOC.replace(' ', '\ '))
 
     def _updateInterfaceTextByEvent(self, evt):
         self.menu_panel.updateInterfaceTxt()
@@ -313,7 +321,7 @@ class PyoSynth(wx.Frame):
             self.midiKeys.setVirtualKeyboardMode(self.virtual_keys)
             self.virtual_keys_item.Enable(True)
             self.boxes_list[0].setUnused(True)
-            utils.printMessage("Computer keyboard selected as MIDI input (Virtual Keyboard)", 1)
+            PSUtils.printMessage("Computer keyboard selected as MIDI input (Virtual Keyboard)", 1)
         else:
             self.midiKeys.disableVirtualKeyboardMode()
             self.boxes_list[0].setUnused(False)
@@ -322,60 +330,60 @@ class PyoSynth(wx.Frame):
                 self._base_panel.Unbind(wx.EVT_KEY_UP)
                 self.virtual_keys_item.Check(False)
             self.virtual_keys_item.Enable(False)
-            utils.printMessage("Virtual Keyboard disabled", 1)
+            PSUtils.printMessage("Virtual Keyboard disabled", 1)
 
     def _toggleComputerKeyboardByEvent(self, evt):
         if evt.IsChecked():
             self._base_panel.Bind(wx.EVT_KEY_DOWN, self.virtual_keys.OnKeyDown)
             self._base_panel.Bind(wx.EVT_KEY_UP, self.virtual_keys.OnKeyUp)
-            utils.printMessage("Virtual Keyboard engaged", 1)
+            PSUtils.printMessage("Virtual Keyboard engaged", 1)
         else:
             self._base_panel.Unbind(wx.EVT_KEY_DOWN)
             self._base_panel.Unbind(wx.EVT_KEY_UP)
-            utils.printMessage("Virtual Keyboard disengaged", 1)
+            PSUtils.printMessage("Virtual Keyboard disengaged", 1)
 
     def _setPolyphonyByEvent(self, evt):
         index = evt.GetId()-self._BASE_ID_POLY_MENU
-        config.PYOSYNTH_PREF['poly'] = config.POLYPHONY_VALUES[index]
-        utils.printMessage("Polyphony changed to: %d" % config.PYOSYNTH_PREF['poly'], 1)
-        self.midiKeys.setPoly(config.PYOSYNTH_PREF['poly'])
+        PSConfig.PYOSYNTH_PREF['poly'] = PSConfig.POLYPHONY_VALUES[index]
+        PSUtils.printMessage("Polyphony changed to: %d" % PSConfig.PYOSYNTH_PREF['poly'], 1)
+        self.midiKeys.setPoly(PSConfig.PYOSYNTH_PREF['poly'])
         self.status_bar._doSafeUpdatePolyValue(0, False)
 
     def _setPitchBendRangeByEvent(self, evt):
         index = evt.GetId()-self._BASE_ID_PBEND_MENU
-        config.PYOSYNTH_PREF['bend_range'] = config.PITCH_BEND_VALUES[index]
-        utils.printMessage("Pitch bend range changed to: %.1f" % config.PYOSYNTH_PREF['bend_range'], 1)
-        self.midiKeys.setBendRange(config.PYOSYNTH_PREF['bend_range'])
+        PSConfig.PYOSYNTH_PREF['bend_range'] = PSConfig.PITCH_BEND_VALUES[index]
+        PSUtils.printMessage("Pitch bend range changed to: %.1f" % PSConfig.PYOSYNTH_PREF['bend_range'], 1)
+        self.midiKeys.setBendRange(PSConfig.PYOSYNTH_PREF['bend_range'])
 
     def openPreferencesWinByEvent(self, evt):
-        utils.printMessage("Preferences coming soon...", 0)
+        PSUtils.printMessage("Preferences coming soon...", 0)
 
     def toggleUserMatchModeByEvent(self, evt):
         self.USER_MATCH_MODE = evt.IsChecked()
         if evt.IsChecked():
-            utils.printMessage("Match mode enabled", 1)
+            PSUtils.printMessage("Match mode enabled", 1)
         else:
-            utils.printMessage("Match mode disabled", 1)
+            PSUtils.printMessage("Match mode disabled", 1)
 
     def _cycleKeyboardModesByEvent(self, evt):
         id = evt.GetId()
         if id == 301:
             if self.midiKeys.getKeyboardMode() != 0:
                 self.midiKeys.setKeyboardMode(0)
-                utils.printMessage("Keyboard mode: Normal", 1)
+                PSUtils.printMessage("Keyboard mode: Normal", 1)
         elif id == 302:
             if self.midiKeys.getKeyboardMode() != 1:
                 self.midiKeys.setKeyboardMode(1)
-                utils.printMessage("Keyboard mode: Normal + Sustain", 1)
+                PSUtils.printMessage("Keyboard mode: Normal + Sustain", 1)
         elif id == 303:
             if self.midiKeys.getKeyboardMode() != 2:
                 self.midiKeys.setKeyboardMode(2)
-                utils.printMessage("Keyboard mode: Mono", 1)
+                PSUtils.printMessage("Keyboard mode: Mono", 1)
 
     def _cycleMonoModesByEvent(self, evt):
         i = evt.GetId()-self._BASE_ID_MONO_TYPE
-        utils.printMessage("Mono type changed to: %s Note Priority" % (['Most Recent', 'Lowest', 'Highest'][i]), 1)
-        config.PYOSYNTH_PREF['mono_type'] = i
+        PSUtils.printMessage("Mono type changed to: %s Note Priority" % (['Most Recent', 'Lowest', 'Highest'][i]), 1)
+        PSConfig.PYOSYNTH_PREF['mono_type'] = i
         self.midiKeys.setMonoType(i)
 
     def _resetAllBoxesByEvent(self, evt):
@@ -390,24 +398,24 @@ class PyoSynth(wx.Frame):
             box.disable(self.script_namespace)
 
     def _saveRecentScriptsList(self):
-        with open(config.RECENT_SCRIPTS_PATH, 'w') as f:
-            pickle.dump(config.RECENT_SCRIPTS, f)
+        with open(PSConfig.RECENT_SCRIPTS_PATH, 'w') as f:
+            pickle.dump(PSConfig.RECENT_SCRIPTS, f)
 
     def _savePyoSynthPref(self):
-        with open(config.PYOSYNTH_PREF_PATH, 'w') as f:
-            pickle.dump(config.PYOSYNTH_PREF, f)
+        with open(PSConfig.PYOSYNTH_PREF_PATH, 'w') as f:
+            pickle.dump(PSConfig.PYOSYNTH_PREF, f)
 
     def _saveTerminalLogByEvent(self, evt):
         try:
             name = 'pyosynth_log_%s.txt' % time.strftime("%d-%m-%y_%H-%M-%S")
-            self.terminal_win._stdout_ctrl.SaveFile(os.path.join(config.HOME_PATH, name), 0)
+            self.terminal_win._stdout_ctrl.SaveFile(os.path.join(PSConfig.HOME_PATH, name), 0)
         except:
-            utils.printMessage("Failed to save the log")
+            PSUtils.printMessage("Failed to save the log")
         else:
-            utils.printMessage("Log saved in user's home directory")
+            PSUtils.printMessage("Log saved in user's home directory")
 
     def _buildRecentScriptsMenu(self, menu, id_start):
-        for path in config.RECENT_SCRIPTS:
+        for path in PSConfig.RECENT_SCRIPTS:
             menu.Append(id_start, path, "", wx.ITEM_NORMAL)
             self.Bind(wx.EVT_MENU, self._setScriptFromRecentMenuByEvent, id=id_start)
             id_start += 1
@@ -415,7 +423,7 @@ class PyoSynth(wx.Frame):
         self.Bind(wx.EVT_MENU, self.clearRecentScriptsByEvent, id=id_start)
 
     def clearRecentScriptsByEvent(self, evt):
-        config.RECENT_SCRIPTS = []
+        PSConfig.RECENT_SCRIPTS = []
         menu = evt.GetEventObject()
         items = menu.GetMenuItems()
         for item in items:
@@ -509,7 +517,7 @@ class PyoSynth(wx.Frame):
             except ValueError: # no extension
                 pass
             finally: # add correct fileformat
-                path += config.REC_FORMAT_DICT[config.REC_FORMAT]
+                path += PSConfig.REC_FORMAT_DICT[PSConfig.REC_FORMAT]
             shutil.move(evt.GetTrackPath(), path)
             evt.GetEventObject()._removeTrack()
 
@@ -517,60 +525,60 @@ class PyoSynth(wx.Frame):
 ##### INIT INIT INIT INIT
 ##### --------------------
     def _getSize(self, num):
-        self.rows = int(math.ceil((num)/float(config.NB_ELEM_ROW)))
+        self.rows = int(math.ceil((num) / float(PSConfig.NB_ELEM_ROW)))
         if self.rows>1:
-            height = self.rows*config.UNIT_SIZE[1]+22+config.STATS_BAR_HGT+config.SETUP_PANEL_HGT
-            width = config.UNIT_SIZE[0]*config.NB_ELEM_ROW+config.WHEELS_BOX_WIDTH
+            height = self.rows * PSConfig.UNIT_SIZE[1] + 22 + PSConfig.STATS_BAR_HGT + PSConfig.SETUP_PANEL_HGT
+            width = PSConfig.UNIT_SIZE[0] * PSConfig.NB_ELEM_ROW + PSConfig.WHEELS_BOX_WIDTH
         else:
-            height = config.UNIT_SIZE[1]+22+config.STATS_BAR_HGT+config.SETUP_PANEL_HGT
-            width = (num)*config.UNIT_SIZE[0]+config.WHEELS_BOX_WIDTH
+            height = PSConfig.UNIT_SIZE[1] + 22 + PSConfig.STATS_BAR_HGT + PSConfig.SETUP_PANEL_HGT
+            width = (num) * PSConfig.UNIT_SIZE[0] + PSConfig.WHEELS_BOX_WIDTH
             
         return (width,height)
         
     def _createBoxes(self, num):
         self.boxes_list = []
-        margin = config.WHEELS_BOX_WIDTH
+        margin = PSConfig.WHEELS_BOX_WIDTH
         
         #creation boite de modulation et pitch bend
-        self.boxes_list.append(WheelsBox(self, self.midiKeys['bend'], self.midiKeys['mod'], (0,config.SETUP_PANEL_HGT), config.UNIT_SIZE[1]*self.rows))
+        self.boxes_list.append(WheelsBox(self, self.midiKeys['bend'], self.midiKeys['mod'], (0, PSConfig.SETUP_PANEL_HGT), PSConfig.UNIT_SIZE[1] * self.rows))
         
         for i in range(self.rows):
             for j in range(num):
-                if j==config.NB_ELEM_ROW:
+                if j==PSConfig.NB_ELEM_ROW:
                     break
-                if j+i*config.NB_ELEM_ROW < num:
-                    ctl = j+i*config.NB_ELEM_ROW+1
+                if j+i*PSConfig.NB_ELEM_ROW < num:
+                    ctl = j+ i * PSConfig.NB_ELEM_ROW + 1
                     self.boxes_list.append(ParamBox(self,
-                                                    (config.UNIT_SIZE[0]*j+margin, config.UNIT_SIZE[1]*i+config.SETUP_PANEL_HGT),
+                                                    (PSConfig.UNIT_SIZE[0] * j + margin, PSConfig.UNIT_SIZE[1] * i + PSConfig.SETUP_PANEL_HGT),
                                                     "Unused", self.midiKeys.ctl_list[ctl])
                                            )
 
 
     def _setPreferences(self):
-        utils.printMessage("Loading PyoSynth preferences...", 1)
+        PSUtils.printMessage("Loading PyoSynth preferences...", 1)
 
         # setting poly
-        self.midiKeys.setPoly(config.PYOSYNTH_PREF['poly'])
-        self.status_bar._doSafeUpdatePolyValue(0, config.PYOSYNTH_PREF['poly'])
+        self.midiKeys.setPoly(PSConfig.PYOSYNTH_PREF['poly'])
+        self.status_bar._doSafeUpdatePolyValue(0, PSConfig.PYOSYNTH_PREF['poly'])
         # check corresponding item in menu
         for item in self._poly_menu_items_list:
-            if item.GetText() == str(config.PYOSYNTH_PREF['poly']):
+            if item.GetText() == str(PSConfig.PYOSYNTH_PREF['poly']):
                 item.Check(True)
-        utils.printMessage("Polyphony set to: %d" % config.PYOSYNTH_PREF['poly'], 1)
+        PSUtils.printMessage("Polyphony set to: %d" % PSConfig.PYOSYNTH_PREF['poly'], 1)
 
         # setting bend range
-        self.midiKeys.setBendRange(config.PYOSYNTH_PREF['bend_range'])
+        self.midiKeys.setBendRange(PSConfig.PYOSYNTH_PREF['bend_range'])
         # check corresponding item in menu
         for item in self._pbend_menu_items_list:
-            if item.GetText() == str(config.PYOSYNTH_PREF['bend_range']):
+            if item.GetText() == str(PSConfig.PYOSYNTH_PREF['bend_range']):
                 item.Check(True)
-        utils.printMessage("Pitch bend range set to: %.1f" % config.PYOSYNTH_PREF['bend_range'], 1)
+        PSUtils.printMessage("Pitch bend range set to: %.1f" % PSConfig.PYOSYNTH_PREF['bend_range'], 1)
 
         # setting mono type
-        utils.printMessage("Mono type changed to: %s Note Priority" %
-                           (['Most Recent', 'Lowest', 'Highest'][config.PYOSYNTH_PREF['mono_type']]), 1)
-        self.midiKeys.setMonoType(config.PYOSYNTH_PREF['mono_type'])
-        self._mono_type_items_list[config.PYOSYNTH_PREF['mono_type']].Check(True)
+        PSUtils.printMessage("Mono type changed to: %s Note Priority" %
+                           (['Most Recent', 'Lowest', 'Highest'][PSConfig.PYOSYNTH_PREF['mono_type']]), 1)
+        self.midiKeys.setMonoType(PSConfig.PYOSYNTH_PREF['mono_type'])
+        self._mono_type_items_list[PSConfig.PYOSYNTH_PREF['mono_type']].Check(True)
 
     def enableMenuItems(self):
         """
@@ -582,22 +590,28 @@ class PyoSynth(wx.Frame):
     def _printPyoVersion(self):
         import __builtin__
         if hasattr(__builtin__, 'pyo_use_double'):
-            if __builtin__['pyo_use_double'] is True:
-                prec = "double"
+            if PSConfig.PLATFORM == 'linux2':
+                if __builtin__.__dict__['pyo_use_double'] is True:
+                    prec = "double"
+                else:
+                    prec = "single"
             else:
-                prec = "single"
+                if __builtin__['pyo_use_double'] is True:
+                    prec = "double"
+                else:
+                    prec = "single"
         else:
             prec = "single"
-        utils.printMessage("pyo version {1}.{2}.{3} (uses {0} precision)".format(prec, *config.VERSIONS['pyo']), 0)
+        PSUtils.printMessage("pyo version {1}.{2}.{3} (uses {0} precision)".format(prec, *PSConfig.VERSIONS['pyo']), 0)
 
     def _buildPolyphonyMenu(self, menu, id_start):
         self._BASE_ID_POLY_MENU = id_start
         poly_menu = wx.Menu()
         self._poly_menu_items_list = []
 
-        for i, val in enumerate(config.POLYPHONY_VALUES):
-            self._poly_menu_items_list.append(poly_menu.Append(self._BASE_ID_POLY_MENU+i,
-                                                               "%s"%config.POLYPHONY_VALUES[i], "", wx.ITEM_RADIO))
+        for i, val in enumerate(PSConfig.POLYPHONY_VALUES):
+            self._poly_menu_items_list.append(poly_menu.Append(self._BASE_ID_POLY_MENU + i,
+                                                               "%s" % PSConfig.POLYPHONY_VALUES[i], "", wx.ITEM_RADIO))
             self.Bind(wx.EVT_MENU, self._setPolyphonyByEvent, id=self._BASE_ID_POLY_MENU+i)
         menu.AppendMenu(-1, "Max Polyphony", poly_menu)
 
@@ -606,7 +620,7 @@ class PyoSynth(wx.Frame):
         pbend_menu = wx.Menu()
         self._pbend_menu_items_list = []
 
-        for i, val in enumerate(config.PITCH_BEND_VALUES):
+        for i, val in enumerate(PSConfig.PITCH_BEND_VALUES):
             self._pbend_menu_items_list.append(
                 pbend_menu.Append(self._BASE_ID_PBEND_MENU + i, "%s" % val, "", wx.ITEM_RADIO))
             self.Bind(wx.EVT_MENU, self._setPitchBendRangeByEvent, id=self._BASE_ID_PBEND_MENU + i)
@@ -636,7 +650,7 @@ class PyoSynth(wx.Frame):
                 self.Bind(wx.EVT_MENU, self._functionsCallback, id=id)
                 self._funcmenu_items[i].Enable(True)
                 self._funcmenu_items[i].SetText("f%d - %s\tAlt+%d" % ( (i + 1), elem[1], (i+1)%10))
-                utils.printMessage("Function %d - '%s' set" % (i+1, elem[1]), 1)
+                PSUtils.printMessage("Function %d - '%s' set" % (i+1, elem[1]), 1)
             else:
                 if not callable(elem):
                     self.exc_win.printException(self._script_path.rsplit("/", 1)[1],
@@ -647,7 +661,7 @@ class PyoSynth(wx.Frame):
                 self.Bind(wx.EVT_MENU, self._functionsCallback, id=id)
                 self._funcmenu_items[i].Enable(True)
                 self._funcmenu_items[i].SetText("f%d - No name\tAlt+%d" % ((i + 1), (i+1)%10))
-                utils.printMessage("Function %d - No name set" % (i + 1), 1)
+                PSUtils.printMessage("Function %d - No name set" % (i + 1), 1)
 
         self._FUNCTIONS_SET = True
 
@@ -664,7 +678,7 @@ class PyoSynth(wx.Frame):
         id = evt.GetId()
         func_name = evt.GetEventObject().FindItemById(id).GetText().rsplit('\t', 1)[0]
         try:
-            utils.printMessage("Executing '%s'" % func_name, 1)
+            PSUtils.printMessage("Executing '%s'" % func_name, 1)
             func_return = self._functions_dict[id]()
         except Exception:
             exc_type, exc_name, exc_tb = sys.exc_info()
@@ -673,7 +687,7 @@ class PyoSynth(wx.Frame):
             self.exc_win.newException(self._script_path.rsplit('/', 1)[1], string)
         else:
             try: # tries to print the output
-                utils.printMessage("'%s' returned: %s" % (func_name, str(func_return)))
+                PSUtils.printMessage("'%s' returned: %s" % (func_name, str(func_return)))
             except:
                 pass
 
@@ -685,8 +699,8 @@ class PyoSynth(wx.Frame):
         midi_profiles_text.Enable(False)
 
         self._BASE_ID_SAVE_PROFILE = id_start
-        self._BASE_ID_DEL_PROFILE = id_start + config.MAX_SAVE_PROFILES
-        self._BASE_ID_LOAD_PROFILE = id_start + config.MAX_SAVE_PROFILES * 2
+        self._BASE_ID_DEL_PROFILE = id_start + PSConfig.MAX_SAVE_PROFILES
+        self._BASE_ID_LOAD_PROFILE = id_start + PSConfig.MAX_SAVE_PROFILES * 2
         self._save_profile_items = []
         self._del_profile_items = []
         self._load_profile_items = []
@@ -694,7 +708,7 @@ class PyoSynth(wx.Frame):
         del_profile_menu = wx.Menu()
 
         # Build Save & Delete menus
-        for i in range(config.MAX_SAVE_PROFILES):
+        for i in range(PSConfig.MAX_SAVE_PROFILES):
             self._save_profile_items.append( save_profile_menu.Append(self._BASE_ID_SAVE_PROFILE + i, "Slot %d" % (i+1), "", wx.ITEM_NORMAL) )
             self.Bind(wx.EVT_MENU, self._saveMidiProfileByEvent, id=self._BASE_ID_SAVE_PROFILE + i)
             self._del_profile_items.append( del_profile_menu.Append(self._BASE_ID_DEL_PROFILE + i, "Profile %d" % (i+1), "", wx.ITEM_NORMAL) )
@@ -703,15 +717,15 @@ class PyoSynth(wx.Frame):
         midimenu.AppendMenu(-1, "Delete Profile", del_profile_menu)
 
         # Build Load menu
-        for i in range(config.MAX_SAVE_PROFILES):
+        for i in range(PSConfig.MAX_SAVE_PROFILES):
             n = i+1
             self._load_profile_items.append( midimenu.Append(self._BASE_ID_LOAD_PROFILE + i, "Load Profile %d" % n, "", wx.ITEM_RADIO) )
             self.Bind(wx.EVT_MENU, self._setMidiProfileByEvent, id=self._BASE_ID_LOAD_PROFILE + i)
 
     def _updateMidiProfileMenu(self):
-        n_midi_prof = len(config.midi_profiles)
+        n_midi_prof = len(PSConfig.midi_profiles)
 
-        for i in range(config.MAX_SAVE_PROFILES):
+        for i in range(PSConfig.MAX_SAVE_PROFILES):
             if i < n_midi_prof:
                 self._save_profile_items[i].Enable(True)
                 self._del_profile_items[i].Enable(True)
@@ -725,29 +739,29 @@ class PyoSynth(wx.Frame):
                 self._load_profile_items[i].Enable(False)
 
     def _setLastMidiProfile(self):
-        if config.last_used_midi_profile == -1:
+        if PSConfig.last_used_midi_profile == -1:
             return
         else:
-            index = config.last_used_midi_profile
+            index = PSConfig.last_used_midi_profile
             # reflect the selected profile with interface
             self._load_profile_items[index].Check(True)
             self._doSetMidiProfile(index)
 
     def _setMidiProfileByEvent(self, evt):
         index = evt.GetId() - self._BASE_ID_LOAD_PROFILE
-        config.last_used_midi_profile = index
+        PSConfig.last_used_midi_profile = index
         self._doSetMidiProfile(index)
 
     def _doSetMidiProfile(self, index):
-        self.menu_panel.setAdsrCtlNums(config.midi_profiles[index][0])
-        for i in range(1, len(config.midi_profiles[index])):
-            self.midiKeys.ctl_list[i].setCtlNumber(config.midi_profiles[index][i])
+        self.menu_panel.setAdsrCtlNums(PSConfig.midi_profiles[index][0])
+        for i in range(1, len(PSConfig.midi_profiles[index])):
+            self.midiKeys.ctl_list[i].setCtlNumber(PSConfig.midi_profiles[index][i])
         self._writeMidiProfilesToDisk()
         self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
                                            "Loaded MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
-        utils.printMessage("Loaded MidiProfile %d: %s" % ((index + 1), config.midi_profiles[index]), 0)
+        PSUtils.printMessage("Loaded MidiProfile %d: %s" % ((index + 1), PSConfig.midi_profiles[index]), 0)
 
     def _saveMidiProfileByEvent(self, evt):
         """
@@ -761,40 +775,40 @@ class PyoSynth(wx.Frame):
         tmp_list.append(self.menu_panel.getAdsrCtlNums())
         for i in range(1, len(self.midiKeys.ctl_list)):
             tmp_list.append(self.midiKeys.ctl_list[i].getCtlNumber())
-        if len(config.midi_profiles) > index:
-            config.midi_profiles[index] = tmp_list
+        if len(PSConfig.midi_profiles) > index:
+            PSConfig.midi_profiles[index] = tmp_list
         else:
-            config.midi_profiles.append(tmp_list)
+            PSConfig.midi_profiles.append(tmp_list)
         self._updateMidiProfileMenu()
         # Check saved item to give visual feedback that the item has really been saved
         self._load_profile_items[index].Check(True)
-        config.last_used_midi_profile = index
+        PSConfig.last_used_midi_profile = index
         self._writeMidiProfilesToDisk()
         self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
                                            "Saved MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
-        utils.printMessage("Saved MidiProfile %d" % (index+1), 0)
+        PSUtils.printMessage("Saved MidiProfile %d" % (index+1), 0)
 
     def _deleteMidiProfileByEvent(self, evt):
         index = evt.GetId() - self._BASE_ID_DEL_PROFILE
-        config.midi_profiles.pop(index)
+        PSConfig.midi_profiles.pop(index)
         self._updateMidiProfileMenu()
         self._writeMidiProfilesToDisk()
         self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
                                            "Deleted MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
-        utils.printMessage("Deleted MidiProfile %d" % (index+1), 0)
+        PSUtils.printMessage("Deleted MidiProfile %d" % (index+1), 0)
 
     def _writeMidiProfilesToDisk(self):
-        if len(config.midi_profiles) == 0:
-            if os.path.exists(config.MIDI_PROFILES_PATH):
-                os.remove(config.MIDI_PROFILES_PATH)
+        if len(PSConfig.midi_profiles) == 0:
+            if os.path.exists(PSConfig.MIDI_PROFILES_PATH):
+                os.remove(PSConfig.MIDI_PROFILES_PATH)
         else:
-            with open(config.MIDI_PROFILES_PATH, 'w') as f:
-                to_save = list(config.midi_profiles)
-                to_save.append(config.last_used_midi_profile)
+            with open(PSConfig.MIDI_PROFILES_PATH, 'w') as f:
+                to_save = list(PSConfig.midi_profiles)
+                to_save.append(PSConfig.last_used_midi_profile)
                 pickle.dump(to_save, f)
 
 
@@ -823,10 +837,10 @@ class PyoSynth(wx.Frame):
         self.FILE_DLG_OPEN = True
         if dlg.ShowModal() == wx.ID_OK:
             self.FILE_DLG_OPEN = False
-            save_path = utils.checkExtension(dlg.GetPath(), 'py')
+            save_path = PSUtils.checkExtension(dlg.GetPath(), 'py')
         else:
             self.FILE_DLG_OPEN = False
-            utils.printMessage("Save Values in Script: Wrong extension for output file", 0)
+            PSUtils.printMessage("Save Values in Script: Wrong extension for output file", 0)
             return
 
         self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
@@ -837,12 +851,12 @@ class PyoSynth(wx.Frame):
             self._doSaveValuesInScript()
         except Warning, e:
             self.exc_win.printException(self._script_path.split('/')[-1], str(e))
-            utils.printMessage("An error occurred, see error log for more info.", 0)
+            PSUtils.printMessage("An error occurred, see error log for more info.", 0)
             self.warningWindow.SetText("An error occurred.")
             wx.CallLater(2000, self.warningWindow.destroy)
 
     def _doSaveValuesInScript(self):
-        utils.printMessage("Saving values in script...", 1)
+        PSUtils.printMessage("Saving values in script...", 1)
         links = self.patchWindow.getLinks()
         to_save = []
         for param in links:
@@ -852,13 +866,13 @@ class PyoSynth(wx.Frame):
             init_line = class_args(self.script_namespace[var_name].__class__)
             to_save.append([var_name, attr, value, class_name, init_line])
 
-        utils.printMessage("Params to save: %d\n%s"% (len(to_save), to_save), 1)
+        PSUtils.printMessage("Params to save: %d\n%s"% (len(to_save), to_save), 1)
 
         f = open(self._script_path, 'r')
         script = f.readlines()
         new_script = []
         for i, line in enumerate(script):
-            utils.printMessage("Evaluating line: %d" % (i+1), 1)
+            PSUtils.printMessage("Evaluating line: %d" % (i+1), 1)
             new_line = ""
             if len(to_save) > 0:
                 processed_elems = []
@@ -866,7 +880,7 @@ class PyoSynth(wx.Frame):
                     text_inst = "%s *= *%s\(" % (elem[0], elem[3]) # text for instantiation of pyo object
                     res_inst = re.search(text_inst, line)
                     if res_inst is not None: # if this is the line we're looking for
-                        utils.printMessage("Found match for: %s" % elem[0], 1)
+                        PSUtils.printMessage("Found match for: %s" % elem[0], 1)
 
                         newl = "[a-zA-Z0-9_=,.\[\]'=+\(\) ]*\)\n"
                         if re.search(newl, line) is None: # make sure declaration is a one liner
@@ -875,7 +889,7 @@ class PyoSynth(wx.Frame):
                         text_attr = text_inst + "[a-zA-Z0-9_=,.\[\]'=+\(\) ]*%s *=" % elem[1]
                         res_attr = re.search(text_attr, line)
                         if res_attr is not None: # if the attribute keyword is in the line
-                            utils.printMessage("Found attribute '%s' in the line" % elem[1], 1)
+                            PSUtils.printMessage("Found attribute '%s' in the line" % elem[1], 1)
                             new_line = line[0:res_attr.end()]
                             new_line += str(round(elem[2], float_prec))
                             offset = res_attr.end()
@@ -889,7 +903,7 @@ class PyoSynth(wx.Frame):
                             end = re.search("\)", line)
                             args = self._getArgs(line[res_inst.end():end.start()], elem[4])
                             if elem[1] in args[0]: # if the attribute is in the line (w/o keyword)
-                                utils.printMessage("Found value for attribute '%s' in the line" % elem[1], 1)
+                                PSUtils.printMessage("Found value for attribute '%s' in the line" % elem[1], 1)
                                 start, end = self._getAttrPos(line, res_inst.end(), args[1].index(elem[1]))
                                 new_line = line[0:start]
                                 new_line += ", %s" % str(round(elem[2], float_prec))
@@ -897,7 +911,7 @@ class PyoSynth(wx.Frame):
                                 line = new_line
                                 processed_elems.append(j)
                             else: # the attribute is not in the line at all, add it in the end
-                                utils.printMessage("Attribute '%s' not in the line, adding it at the end" % elem[1], 1)
+                                PSUtils.printMessage("Attribute '%s' not in the line, adding it at the end" % elem[1], 1)
                                 new_line = line[0:-2]
                                 new_line += ", %s=%s)\n" % (elem[1], str(round(elem[2], float_prec)))
                                 line = new_line
@@ -917,7 +931,7 @@ class PyoSynth(wx.Frame):
         f.close()
 
         self._saveValCount += 1
-        utils.printMessage("Saved values in script", 0)
+        PSUtils.printMessage("Saved values in script", 0)
         self.warningWindow.SetText("Done!")
         wx.CallLater(2000, self.warningWindow.destroy)
 
@@ -1000,7 +1014,9 @@ class PyoSynth(wx.Frame):
         if evt.IsRunning():
             if not self._checkScriptPathIsValid():
                 return
-            self._doPrepareToRunScript()
+            if self._doPrepareToRunScript():
+                self.menu_panel.btn_run.ToggleState()
+                return
             # actually running/stopping the script
             if self._runScript(): # returns 1 if an error is raised
                 self._stopScriptAfterError()
@@ -1023,9 +1039,10 @@ class PyoSynth(wx.Frame):
             self._stopScript()
         
     def _doPrepareToRunScript(self):
-        utils.printMessage("Preparing to run the script", 0)
+        PSUtils.printMessage("Preparing to run the script", 0)
         if self.serverSetupPanel.hasChanged():
-            self._resetAudioObjsAfterServerShutdown()
+            if self._resetAudioObjsAfterServerShutdown():
+                return 1
             self.serverSetupPanel.resetChangeFlag()
             self.setAutoMatchMode(True) # if values were changed, restore to last save
         if self.midiKeys.isDirty():
@@ -1042,9 +1059,10 @@ class PyoSynth(wx.Frame):
                 self.setAutoMatchMode(True)
                 self._saveValCount = 0
                 self._resetAllBoxesByEvent(None)
+        return 0
     
     def _doPrepareToStopScript(self, error=False):
-        utils.printMessage("Preparing to stop the script", 0)
+        PSUtils.printMessage("Preparing to stop the script", 0)
         if self.MATCHING_VALUES:
             self.quitMatchMode()
         self.clip_monitor.stop()
@@ -1075,7 +1093,7 @@ class PyoSynth(wx.Frame):
             string = traceback.format_exc(exc_tb)
             self.exc_win.newException(os.path.split(self._script_path)[1], string)
             self._getScriptVars()
-            utils.printMessage("An error occurred in the script", 0)
+            PSUtils.printMessage("An error occurred in the script", 0)
             return 1
         self._getScriptVars()
         # add pyo objects to the PatchWindow
@@ -1084,7 +1102,7 @@ class PyoSynth(wx.Frame):
         # updating basic stuff
         self.menu_panel.server_setup_btn.disable()
         self.menu_panel._updateStatus(self.IS_RUNNING)
-        utils.printMessage("Script running", 0)
+        PSUtils.printMessage("Script running", 0)
         return 0
 
     def _stopScript(self):
@@ -1094,7 +1112,7 @@ class PyoSynth(wx.Frame):
         # updating basic stuff
         self.menu_panel.server_setup_btn.enable()
         self.menu_panel._updateStatus(self.IS_RUNNING)
-        utils.printMessage("Script stopped", 0)
+        PSUtils.printMessage("Script stopped", 0)
 
     def _stopScriptAfterError(self):
         self.menu_panel.btn_run.ToggleState()
@@ -1105,8 +1123,16 @@ class PyoSynth(wx.Frame):
         self._stopScript()
 
     def _runScriptForExport(self):
-        self.serverSetupPanel.initServerForExport()
-        self.midiKeys.prepareForExport(config.EXPORT_PREF['notedur'])
+        try:
+            self.serverSetupPanel.initServerForExport()
+        except ServerNotBootedError, e:
+            PSUtils.printMessage("Timeout expired: Server not booted", 1)
+            self.exc_win.printException(self._script_path.split('/')[-1], str(e))
+            return 1
+        else:
+            PSUtils.printMessage("Server booted", 1)
+
+        self.midiKeys.prepareForExport(PSConfig.EXPORT_PREF['notedur'])
         for i in range(1, len(self.midiKeys.ctl_list)):
             self.midiKeys.ctl_list[i].reinit()
         self.menu_panel.reinit()
@@ -1217,13 +1243,22 @@ class PyoSynth(wx.Frame):
                 exec("%s=self.midiKeys['%s']"%(param,key), self.script_namespace, locals())
 
     def _resetAudioObjsAfterServerShutdown(self):
-        self.serverSetupPanel.initServer()
+        try:
+            self.serverSetupPanel.initServer()
+        except ServerNotBootedError, e:
+            PSUtils.printMessage("Timeout expired: Server not booted", 1)
+            self.exc_win.printException(self._script_path.split('/')[-1], str(e))
+            return 1
+        else:
+            PSUtils.printMessage("Server booted", 1)
+
         self.midiKeys.reinit()
         self.boxes_list[0].reinit(self.midiKeys['bend'], self.midiKeys['mod'])
-        self.rate = Metro(config.REFRESH_RATE)
+        self.rate = Metro(PSConfig.REFRESH_RATE)
         self.trig_func = TrigFunc(self.rate, self._mainRefreshLoop)
         self.menu_panel.reinit()
         self.clip_monitor.reinit()
+        return 0
 
     def _removeLinks(self):
         """
@@ -1276,7 +1311,7 @@ class PyoSynth(wx.Frame):
         Start the server (eventually with a fade in).
         """
         self._server_.start()
-        utils.printMessage("Pyo server started", 0)
+        PSUtils.printMessage("Pyo server started", 0)
 
     def stopServer(self):
         """
@@ -1284,13 +1319,13 @@ class PyoSynth(wx.Frame):
         """
         time.sleep(.2)
         self._server_.stop()
-        utils.printMessage("Pyo server stopped", 0)
+        PSUtils.printMessage("Pyo server stopped", 0)
         time.sleep(.2)
 
     def _checkScriptPathIsValid(self):
         if not os.path.exists(self._script_path):
             self.menu_panel.btn_run.ToggleState()
-            utils.printMessage("Error: The script path does not exist.", 0)
+            PSUtils.printMessage("Error: The script path does not exist.", 0)
             self.exc_win.printException(os.path.split(self._script_path)[1], "The script path does not exist.")
             return False
         return True
@@ -1299,14 +1334,14 @@ class PyoSynth(wx.Frame):
 ##### EXPORT EXPORT EXPORT
 ##### --------------------
     def _showExportDialog(self):
-        if len(config.EXPORT_PREF) > 0:
-            dialog = ExportWindow(self, config.EXPORT_PREF)
+        if len(PSConfig.EXPORT_PREF) > 0:
+            dialog = ExportWindow(self, PSConfig.EXPORT_PREF)
         else:
             dialog = ExportWindow(self)
         dialog.CenterOnScreen()
         self._addToWhiteList(dialog.getWhiteListItems())
         if dialog.ShowModal() == wx.ID_OK:
-            config.EXPORT_PREF = dialog.getValues()
+            PSConfig.EXPORT_PREF = dialog.getValues()
             self._removeFromWhiteList(dialog.getWhiteListItems())
             dialog.Destroy()
         else:
@@ -1316,10 +1351,10 @@ class PyoSynth(wx.Frame):
 
     def _createExportTree(self, velocityList):
         paths = []
-        root = os.path.join(config.EXPORT_PREF['path'], 'PSExport')
+        root = os.path.join(PSConfig.EXPORT_PREF['path'], 'PSExport')
         if not os.path.exists(root):
             os.mkdir(root)
-        for i in range(config.EXPORT_PREF['velsteps']):
+        for i in range(PSConfig.EXPORT_PREF['velsteps']):
             path = os.path.join(root, "vel_%03d" % velocityList[i])
             paths.append(path)
             if not os.path.exists(path):
@@ -1330,23 +1365,23 @@ class PyoSynth(wx.Frame):
         if self._showExportDialog() == 1:
             return
         else:
-            with open(config.EXPORT_PREF_PATH, 'w') as f:
-                pickle.dump(config.EXPORT_PREF, f)
+            with open(PSConfig.EXPORT_PREF_PATH, 'w') as f:
+                pickle.dump(PSConfig.EXPORT_PREF, f)
 
         if self.IS_RUNNING:
-            utils.printMessage("Restarting server before export...", 0)
+            PSUtils.printMessage("Restarting server before export...", 0)
             self.menu_panel.btn_run.ToggleState(1)
 
         self._EXPORTING = True
-        utils.printMessage("Preparing to run script for export...", 0)
+        PSUtils.printMessage("Preparing to run script for export...", 0)
         self.menu_panel.btn_run.disable()
         self.runitem.Enable(False)
         if self._runScriptForExport():  # returns 1 if an error is raised
-            utils.printMessage("An error was raised in the script. See Script Error Log for more info.", 0)
+            PSUtils.printMessage("An error was raised while trying to run the script. See Script Error Log for more info.", 0)
             self.menu_panel.btn_run.enable()
             self.runitem.Enable(True)
         else:
-            utils.printMessage("Started exporting script to samples...", 0)
+            PSUtils.printMessage("Started exporting script to samples...", 0)
             self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos, "Exporting samples...")
             self.warningWindow.SetProgressBar()
             self.warningWindow.PulseProgressBar()
@@ -1357,13 +1392,13 @@ class PyoSynth(wx.Frame):
             self.status_bar.vu_meter.reset()
             self.menu_panel.btn_run.enable()
             self.runitem.Enable(True)
-            utils.printMessage("Finished exporting script to samples in %02d:%02d:%02d"%utils.getTimeFromSeconds(duration), 0)
-            utils.openSysFileBrowser(os.path.join(config.EXPORT_PREF['path'], 'PSExport'))
+            PSUtils.printMessage("Finished exporting script to samples in %02d:%02d:%02d"%PSUtils.getTimeFromSeconds(duration), 0)
+            PSUtils.openSysFileBrowser(os.path.join(PSConfig.EXPORT_PREF['path'], 'PSExport'))
         self._EXPORTING = False
 
     def _doExportScript(self):
-        freqsList = utils.midiRangeToHz(config.EXPORT_PREF['midimin'], config.EXPORT_PREF['midimax'])
-        velocityList = utils.createVelocityList(config.EXPORT_PREF['velsteps'])
+        freqsList = PSUtils.midiRangeToHz(PSConfig.EXPORT_PREF['midimin'], PSConfig.EXPORT_PREF['midimax'])
+        velocityList = PSUtils.createVelocityList(PSConfig.EXPORT_PREF['velsteps'])
         totalSamples = len(freqsList) * len(velocityList)
         start_time = time.time()
         sample_proc_time_list = []
@@ -1371,25 +1406,25 @@ class PyoSynth(wx.Frame):
         self.warningWindow.SetProgressValue(0)
         self.warningWindow.SetBottomText("Elapsed: 00:00:00")
         paths = self._createExportTree(velocityList)
-        midinote_count = config.EXPORT_PREF['midimin']
+        midinote_count = PSConfig.EXPORT_PREF['midimin']
 
         for i in range(len(freqsList)):
             for j in range(len(velocityList)):
                 path = os.path.join(paths[j], "note_%d%s" % (
-                midinote_count, config.REC_FORMAT_DICT[config.EXPORT_PREF['format']]))
-                self.serverSetupPanel.recordOptions(config.EXPORT_PREF['filelength'],
+                    midinote_count, PSConfig.REC_FORMAT_DICT[PSConfig.EXPORT_PREF['format']]))
+                self.serverSetupPanel.recordOptions(PSConfig.EXPORT_PREF['filelength'],
                                                     path,
-                                                    config.EXPORT_PREF['format'],
-                                                    config.EXPORT_PREF['bitdepth'])
+                                                    PSConfig.EXPORT_PREF['format'],
+                                                    PSConfig.EXPORT_PREF['bitdepth'])
                 self.midiKeys.setVelocityValue(velocityList[j] / 127.)
                 self.midiKeys.notes.value = freqsList[i]
                 self.midiKeys.playNote()
-                utils.printMessage(
-                    "Offline Server rendering file %s dur=%.6f" % (path, config.EXPORT_PREF['filelength']), 0)
+                PSUtils.printMessage(
+                    "Offline Server rendering file %s dur=%.6f" % (path, PSConfig.EXPORT_PREF['filelength']), 0)
                 self.serverSetupPanel._server.start()
 
                 # display progress
-                current_progress = i * config.EXPORT_PREF['velsteps'] + j + 1
+                current_progress = i * PSConfig.EXPORT_PREF['velsteps'] + j + 1
                 self.warningWindow.SetText(
                     "Exporting samples... %d/%d" % (current_progress, totalSamples))
                 self.warningWindow.SetProgressValue(current_progress)
@@ -1399,8 +1434,8 @@ class PyoSynth(wx.Frame):
                 else:
                     sample_proc_time_list.append(time.time()-start_time-sum(sample_proc_time_list))
                 estimate = sum(sample_proc_time_list)/len(sample_proc_time_list)*(totalSamples-current_progress)
-                remaining_str = "Remaining: %02d:%02d:%02d" % utils.getTimeFromSeconds(estimate)
-                elapsed_str = "Elapsed: %02d:%02d:%02d" % utils.getTimeFromSeconds(time.time()-start_time)
+                remaining_str = "Remaining: %02d:%02d:%02d" % PSUtils.getTimeFromSeconds(estimate)
+                elapsed_str = "Elapsed: %02d:%02d:%02d" % PSUtils.getTimeFromSeconds(time.time()-start_time)
                 self.warningWindow.SetBottomText(elapsed_str+"  |  "+remaining_str)
                 # end display progress
 
@@ -1414,10 +1449,10 @@ class PyoSynth(wx.Frame):
 ##### OPEN OPEN OPEN OPEN
 ##### --------------------
     def _openDialogByEvent(self, evt):
-        if config.LAST_DIR is None:
-            dir = r"%s" % config.HOME_PATH
+        if PSConfig.LAST_DIR is None:
+            dir = r"%s" % PSConfig.HOME_PATH
         else:
-            dir = r"%s" % config.LAST_DIR
+            dir = r"%s" % PSConfig.LAST_DIR
 
         dlg = wx.FileDialog(
             self, message="Choose a script",
@@ -1430,7 +1465,7 @@ class PyoSynth(wx.Frame):
         self.FILE_DLG_OPEN = True
         if dlg.ShowModal() == wx.ID_OK:
             self._script_path = dlg.GetPath()
-            config.LAST_DIR = os.path.split(self._script_path)[0]
+            PSConfig.LAST_DIR = os.path.split(self._script_path)[0]
             self._addPathToRecent()
             self.menu_panel._setScriptName(os.path.split(self._script_path)[1])
             self.enableMenuItems()
@@ -1446,19 +1481,19 @@ class PyoSynth(wx.Frame):
         """
         try:
             # verifie si le chemin est deja dans la liste et si oui, le retire
-            index = config.RECENT_SCRIPTS.index(self._script_path)
-            config.RECENT_SCRIPTS.pop(index)
+            index = PSConfig.RECENT_SCRIPTS.index(self._script_path)
+            PSConfig.RECENT_SCRIPTS.pop(index)
         except ValueError:
             pass
         finally:
-            config.RECENT_SCRIPTS.insert(0, self._script_path)
-            if len(config.RECENT_SCRIPTS) > config.MAX_RECENT_SCRIPTS:
-                config.RECENT_SCRIPTS.pop(-1)
+            PSConfig.RECENT_SCRIPTS.insert(0, self._script_path)
+            if len(PSConfig.RECENT_SCRIPTS) > PSConfig.MAX_RECENT_SCRIPTS:
+                PSConfig.RECENT_SCRIPTS.pop(-1)
 
     def _setScriptFromRecentMenuByEvent(self, evt):
         item = evt.GetEventObject().FindItemById(evt.GetId())
         self._script_path = item.GetText()
-        config.LAST_DIR = os.path.split(self._script_path)[0]
+        PSConfig.LAST_DIR = os.path.split(self._script_path)[0]
         self._addPathToRecent()
         self.menu_panel._setScriptName(os.path.split(self._script_path)[1])
         self.enableMenuItems()
@@ -1466,14 +1501,14 @@ class PyoSynth(wx.Frame):
             self._stopCurrentScriptToRunNewScript()
 
     def _setMostRecentScriptByEvent(self, evt):
-        if len(config.RECENT_SCRIPTS) > 0:
-            self._script_path = config.RECENT_SCRIPTS[0]
+        if len(PSConfig.RECENT_SCRIPTS) > 0:
+            self._script_path = PSConfig.RECENT_SCRIPTS[0]
             self.menu_panel._setScriptName(os.path.split(self._script_path)[1])
             self.enableMenuItems()
             if self.IS_RUNNING:
                 self._stopCurrentScriptToRunNewScript()
         else:
-            utils.printMessage("No recent script to run yet.", 0)
+            PSUtils.printMessage("No recent script to run yet.", 0)
 
 
 ##### -----------------------
@@ -1495,8 +1530,8 @@ class PyoSynth(wx.Frame):
 
         self.FILE_DLG_OPEN = True
         if dlg.ShowModal() == wx.ID_OK:
-            save_path = utils.checkExtension(dlg.GetPath(), 'py')
-            config.LAST_DIR = os.path.split(save_path)[0]
+            save_path = PSUtils.checkExtension(dlg.GetPath(), 'py')
+            PSConfig.LAST_DIR = os.path.split(save_path)[0]
             preset = self.buildPreset()
             if self.writePresetAs(self._script_path, save_path, preset):
                 if self.LAST_EXC_SCRIPT == self._script_path:
@@ -1550,17 +1585,17 @@ class PyoSynth(wx.Frame):
         else:
             script = f.readlines()
             for i, line in enumerate(script):
-                if line == config.PRESET_BANNER+"\n":
+                if line == PSConfig.PRESET_BANNER+ "\n":
                     script = script[0:i]
                     break
             while script[-1]=='\n':
                 del script[-1]
             f.close()
-            if config.PATCH_BANNER+"\n" not in script:
-                script.insert(0, config.PATCH_BANNER+"\n")
+            if PSConfig.PATCH_BANNER+ "\n" not in script:
+                script.insert(0, PSConfig.PATCH_BANNER + "\n")
             f = open(path, 'w')
             f.writelines(script)
-            f.write("\n\n\n"+config.PRESET_BANNER+"\n")
+            f.write("\n\n\n" + PSConfig.PRESET_BANNER + "\n")
             f.write("preset = ")
             pprint.pprint(dict, f)
             f.write("\npyosynth.setPreset(preset)")
@@ -1581,17 +1616,17 @@ class PyoSynth(wx.Frame):
         else:
             script = f.readlines()
             for i, line in enumerate(script):
-                if line == config.PRESET_BANNER+"\n":
+                if line == PSConfig.PRESET_BANNER+ "\n":
                     script = script[0:i]
                     break
             while script[-1]=='\n':
                 del script[-1]
             f.close()
-            if config.PATCH_BANNER+"\n" not in script:
-                script.insert(0, config.PATCH_BANNER+"\n")
+            if PSConfig.PATCH_BANNER+ "\n" not in script:
+                script.insert(0, PSConfig.PATCH_BANNER + "\n")
             f = open(dest, 'w')
             f.writelines(script)
-            f.write("\n\n\n"+config.PRESET_BANNER+"\n")
+            f.write("\n\n\n" + PSConfig.PRESET_BANNER + "\n")
             f.write("preset = ")
             pprint.pprint(dict, f)
             f.write("\npyosynth.setPreset(preset)")
@@ -1621,17 +1656,17 @@ class PyoSynth(wx.Frame):
         else:
             script = f.readlines()
             for i, line in enumerate(script):
-                if line == config.PRESET_BANNER+"\n":
+                if line == PSConfig.PRESET_BANNER+ "\n":
                     script = script[0:i]
                     break
             while script[-1]=='\n':
                 del script[-1]
             f.close()
-            if config.PATCH_BANNER+"\n" not in script:
-                script.insert(0, config.PATCH_BANNER+"\n")
+            if PSConfig.PATCH_BANNER+ "\n" not in script:
+                script.insert(0, PSConfig.PATCH_BANNER + "\n")
             f = open(path, 'w')
             f.writelines(script)
-            f.write("\n\n\n"+config.PRESET_BANNER+"\n")
+            f.write("\n\n\n" + PSConfig.PRESET_BANNER + "\n")
             f.write("preset = ")
             pprint.pprint(preset, f)
             f.write("\npyosynth.setPreset(preset)")
@@ -1650,9 +1685,9 @@ class PyoSynth(wx.Frame):
 
     def _doSetPreset(self, preset, export=False):
         if export:
-            utils.printMessage("Setting preset for export", 0)
+            PSUtils.printMessage("Setting preset for export", 0)
         else:
-            utils.printMessage("Setting preset", 0)
+            PSUtils.printMessage("Setting preset", 0)
         if 0 in preset:
             elem = preset.pop(0)
             self.menu_panel.setAdsrValues(elem['adsr'])
@@ -1675,7 +1710,7 @@ class PyoSynth(wx.Frame):
             #        self.midiKeys.setMonoType(elem['mono_type'])
             #        self._mono_type_items_list[elem['mono_type']].Check(True)
         values_dict = {} #contains all the values for the MatchMode
-        utils.printMessage("Retrieving values for controls...", 1)
+        PSUtils.printMessage("Retrieving values for controls...", 1)
         for key in preset:
             try:
                 if preset[key]['attr'] is not None:
@@ -1694,11 +1729,11 @@ class PyoSynth(wx.Frame):
                 if export:
                     val = preset[key]['norm_val'] if preset[key]['norm_val'] is not None else 0.
                     values_dict[key] = val
-                    utils.printMessage("ctl: %d; norm val: %.3f" % (key, val), 1)
+                    PSUtils.printMessage("ctl: %d; norm val: %.3f" % (key, val), 1)
                 else:
                     if preset[key]['val'] is not None:
                         values_dict[key] = preset[key]['val']
-                        utils.printMessage("ctl: %d; val: %.3f" % (key, preset[key]['val']), 1)
+                        PSUtils.printMessage("ctl: %d; val: %.3f" % (key, preset[key]['val']), 1)
 
         return values_dict
                 
@@ -1711,7 +1746,7 @@ class PyoSynth(wx.Frame):
             preset = {numero du controleur:valeur du controleur}
         """
         self.MATCHING_VALUES = True
-        utils.printMessage("Starting Match Mode...", 1)
+        PSUtils.printMessage("Starting Match Mode...", 1)
         self.i = 0
         self.values_dict = values_dict
 
@@ -1723,9 +1758,9 @@ class PyoSynth(wx.Frame):
         self._nextPreset()
 
     def _setPresetValuesForExport(self, values_dict):
-        utils.printMessage("Setting preset values for export", 0)
+        PSUtils.printMessage("Setting preset values for export", 0)
         for key in values_dict:
-            utils.printMessage("Setting ctl %d to %.3f hijack value" % (key, values_dict[key]), 1)
+            PSUtils.printMessage("Setting ctl %d to %.3f hijack value" % (key, values_dict[key]), 1)
             self.boxes_list[key].setHijackNormValueForExport(values_dict[key])
 
     def _nextPreset(self):
@@ -1734,7 +1769,7 @@ class PyoSynth(wx.Frame):
             self.i += 1
             while True:
                 if self.i in self.values_dict:
-                    utils.printMessage("Matching value for ctl.%d" % self.i, 1)
+                    PSUtils.printMessage("Matching value for ctl.%d" % self.i, 1)
                     self.boxes_list[self.i].Enable(True)
                     self.boxes_list[self.i].matchValue(self.values_dict.pop(self.i))
                     break
@@ -1742,7 +1777,7 @@ class PyoSynth(wx.Frame):
                     self.i += 1
         else:
             self.MATCHING_VALUES = False
-            utils.printMessage("Match Mode completed", 1)
+            PSUtils.printMessage("Match Mode completed", 1)
             self.reset_boxes_item.Enable(True)
             self.enableChildren(True)
             self.warningWindow.SetText("Done!")
@@ -1842,7 +1877,7 @@ class PyoSynth(wx.Frame):
         """
         if self._EXPORTING: return
 
-        utils.printMessage("setFunctions() called", 1)
+        PSUtils.printMessage("setFunctions() called", 1)
         if self._FUNCTIONS_SET:
             self.exc_win.printException(self._script_path.rsplit('/', 1)[1], "setFunctions() can only be called once\n")
             return

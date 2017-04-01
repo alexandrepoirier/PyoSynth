@@ -25,7 +25,7 @@ import os
 import time
 import pickle
 import shutil
-from resources.config import *
+from resources.PSConfig import *
 
 MSG_KEYW = {0:'INFO',1:'WARNING',2:'ERROR'}
 def printMessage(text, level=0):

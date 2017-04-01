@@ -18,11 +18,15 @@ You should have received a copy of the GNU General Public License
 along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from pyo import *
-import config
+import PSConfig
 import time
 import os.path
 import extra
+
+if PSConfig.PLATFORM == 'linux2':
+    from pyo64 import *
+else:
+    from pyo import *
 
 
 class MidiControl:
@@ -667,7 +671,7 @@ class SoundRecorder2:
             final_table.copyData(self._table_list[i], srcpos=0, destpos=int(sr*i*self._table_dur), length=length)
         final_table.fadein()
         final_table.fadeout()
-        final_table.save(self._path, config.REC_FORMAT, config.REC_BIT_DEPTH)
+        final_table.save(self._path, PSConfig.REC_FORMAT, PSConfig.REC_BIT_DEPTH)
         self._IS_SAVING = False
 
 
@@ -680,7 +684,7 @@ class SoundRecorder:
         self._IS_SAVING = False
 
         # pyo objects
-        self._table = NewTable(config.REC_MAX_TIME+1, self._chnls)
+        self._table = NewTable(PSConfig.REC_MAX_TIME + 1, self._chnls)
         self._rec_obj = TableFill(obj, self._table)
 
     def __del__(self):
@@ -700,7 +704,7 @@ class SoundRecorder:
         final_table.copyData(self._table, srcpos=0, destpos=0, length=pos)
         final_table.fadein()
         final_table.fadeout()
-        final_table.save(self._path, config.REC_FORMAT, config.REC_BIT_DEPTH)
+        final_table.save(self._path, PSConfig.REC_FORMAT, PSConfig.REC_BIT_DEPTH)
         self._IS_SAVING = False
 
 
@@ -723,8 +727,8 @@ class TrackRecorder:
         self._recObj.stop()
 
     def _makeNewRecFilePath(self):
-        name = "%s%s" % (time.strftime("%d-%m-%y_%H-%M-%S"), config.REC_FORMAT_DICT[config.REC_FORMAT])
-        return os.path.join(config.REC_PATH, name)
+        name = "%s%s" % (time.strftime("%d-%m-%y_%H-%M-%S"), PSConfig.REC_FORMAT_DICT[PSConfig.REC_FORMAT])
+        return os.path.join(PSConfig.REC_PATH, name)
 
 
 class Click:

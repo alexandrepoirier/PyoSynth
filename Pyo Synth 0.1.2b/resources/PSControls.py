@@ -19,16 +19,21 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import wx, time, math
-import config, buttons, utils
-from audio import Click
+import PSConfig, PSButtons, PSUtils
+from PSAudio import Click
 from controlsPyImg import *
-from pyo import Midictl, Change, TrigFunc, CtlScan
 from threading import Timer
+
+if PSConfig.PLATFORM == 'linux2':
+    from pyo64 import Midictl, Change, TrigFunc, CtlScan
+else:
+    from pyo import Midictl, Change, TrigFunc, CtlScan
+
 
 class PSTextCtrl(wx.Control):
     def __init__(self, parent, pos, text):
         wx.Control.__init__(self, parent, -1, pos, (1,1), style=wx.NO_BORDER)
-        
+
         #Fade in/out properties
         self.IS_SHOWN = True
         self._alpha = 255
@@ -41,6 +46,8 @@ class PSTextCtrl(wx.Control):
         self.left_bmp = txt_ctrl_left_side.GetBitmap()
         self.right_bmp = txt_ctrl_right_side.GetBitmap()
         self.middle_bmp = txt_ctrl_middle.GetBitmap()
+
+        self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
         
         #on coupe a 20 caracteres pour etre sure de na pas depasser
         self._maxChar = 20
@@ -54,14 +61,35 @@ class PSTextCtrl(wx.Control):
         
         width = self._width + self._margin*2
         self.SetSize( (width, self._height) )
-        
-        self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
-        
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(wx.EVT_TIMER, self.changeAlpha)
-        
-    def OnPaint(self, evt):
+
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
+        dc.DrawBitmap(self.left_bmp, 0, 0)
+
+        offset = self.left_bmp.GetSize()[0]
+        loops = self._textWidth + self._margin * 2
+        for i in range(loops):
+            dc.DrawBitmap(self.middle_bmp, offset + i, 0)
+
+        dc.DrawBitmap(self.right_bmp, offset + loops, 0)
+
+        dc.SetFont(self._font)
+        dc.SetTextForeground("#FFFFFF")
+        dc.DrawText(self._text, offset + self._margin, self._height / 5)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
         dc.DrawBitmap(self.left_bmp, 0, 0)
         
         offset = self.left_bmp.GetSize()[0]
@@ -71,7 +99,7 @@ class PSTextCtrl(wx.Control):
             
         dc.DrawBitmap(self.right_bmp, offset+loops, 0)
         
-        dc.SetFont(self.font)
+        dc.SetFont(self._font)
         dc.SetTextForeground("#FFFFFF")
         dc.DrawText(self._text, offset+self._margin, self._height/5)
         
@@ -101,8 +129,7 @@ class PSTextCtrl(wx.Control):
         
     def getTextWidth(self, string):
         dc = wx.ClientDC(self)
-        font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
-        dc.SetFont(font)
+        dc.SetFont(self._font)
         return dc.GetTextExtent(string)[0]
         
     def SetText(self, string):
@@ -147,37 +174,57 @@ class PSScriptTextCtrl(wx.Control):
         #bitmaps
         self.left_bmp = txt_ctrl_left_side.GetBitmap()
         self.middle_bmp = txt_ctrl_middle.GetBitmap()
+
+        self._font = wx.Font(**PSConfig.FONTS['light']['small'])
         
         #on coupe a 40 caracteres pour etre sure de na pas depasser
         self._maxChar = 40
         self._text = text[0:self._maxChar]
         self._textWidth = self.getTextWidth(self._text)
-        self._lastTextWidth = -1
-        
         self._margin = 4
-        self._width = self._textWidth + self.left_bmp.GetSize()[0] + (self._margin*2)
+        self._width = lambda: self._textWidth + self.left_bmp.GetSize()[0] + (self._margin*2)
         self._height = self.middle_bmp.GetSize()[1]
+        self._adjustSize()
         
-        width = self._width + self._margin*2
-        self.SetSize( (width, self._height) )
-        
-        self.font = wx.Font(11, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
-        
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(wx.EVT_TIMER, self.changeAlpha)
         
-    def OnPaint(self, evt):
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
+        self.OnPaintGeneric(dc)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+
+        self.OnPaintGeneric(dc)
+
+    def OnPaintGeneric(self, dc):
         dc.DrawBitmap(self.left_bmp, 0, 0)
-        
+
         offset = self.left_bmp.GetSize()[0]
-        loops = self._textWidth+self._margin*2
+        loops = self._textWidth + self._margin * 2
         for i in range(loops):
-            dc.DrawBitmap(self.middle_bmp, offset+i, 0)
-        
-        dc.SetFont(self.font)
+            dc.DrawBitmap(self.middle_bmp, offset + i, 0)
+
+        dc.SetFont(self._font)
         dc.SetTextForeground("#FFFFFF")
-        dc.DrawText(self._text, offset+self._margin+2, self._height/5)
+
+        if PSConfig.PLATFORM == 'darwin':
+            x = offset + self._margin + 2
+            y = self._height / 5
+        elif PSConfig.PLATFORM == 'linux2':
+            x = offset + self._margin
+            y = 4
+
+        dc.DrawText(self._text, x, y)
         
     def ShowWindow(self):
         self.IS_SHOWN = True
@@ -205,8 +252,7 @@ class PSScriptTextCtrl(wx.Control):
         
     def getTextWidth(self, string):
         dc = wx.ClientDC(self)
-        font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
-        dc.SetFont(font)
+        dc.SetFont(self._font)
         return dc.GetTextExtent(string)[0]
         
     def SetText(self, string):
@@ -215,21 +261,22 @@ class PSScriptTextCtrl(wx.Control):
         wx.CallLater(250, self.ShowWindow)
         
     def DoSetText(self, string):
-        #mise a jour des variables
-        self._lastTextWidth = self._textWidth
         self._text = string[0:self._maxChar]
         self._textWidth = self.getTextWidth(self._text)
-        
-        #mise a jour de la taille
-        self._width = self._textWidth + self.left_bmp.GetSize()[0] + (self._margin*2)
-        width = self._width + self._margin*2
-        self.SetSize( (width, self._height) )
+        self._adjustSize()
+
+    def _adjustSize(self):
+        self._width = self._textWidth + self.left_bmp.GetSize()[0] + (self._margin * 2)
+        if PSConfig.PLATFORM == 'darwin':
+            self.SetSize( (self._width + self._margin*2, self._height) )
+        elif PSConfig.PLATFORM == 'linux2':
+            self.SetSize( (self._width, self._height) )
         
     def GetWidth(self):
-        return self._width
+        return self.GetSize()[0]
         
     def GetHeight(self):
-        return self._height
+        return self.GetSize()[1]
 
 class PSRecordTextCtrl(wx.Control):
     def __init__(self, parent, pos, text):
@@ -244,13 +291,17 @@ class PSRecordTextCtrl(wx.Control):
         self._margin = 2
         self._RECORDING = False
         
-        self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT)
+        self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
         
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-        
-    def OnPaint(self, evt):
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
-        dc.SetFont(self.font)
+        dc.SetFont(self._font)
+
         dc.DrawBitmap(self.left_bmp, 0, 0)
         
         offset = self.left_bmp.GetSize()[0]
@@ -263,6 +314,28 @@ class PSRecordTextCtrl(wx.Control):
         else:
             dc.SetTextForeground("#FFFFFF")
         dc.DrawText(self._text+" - "+self._time, offset+self._margin, 6)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        dc.SetFont(self._font)
+
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        region = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(region, 0, 0)
+
+        dc.DrawBitmap(self.left_bmp, 0, 0)
+
+        offset = self.left_bmp.GetSize()[0]
+        loops = self.GetSize()[0] - offset
+        for i in range(loops):
+            dc.DrawBitmap(self.middle_bmp, offset + i, 0)
+
+        if self._RECORDING:
+            dc.SetTextForeground("#c30b0b")
+        else:
+            dc.SetTextForeground("#FFFFFF")
+        dc.DrawText(self._text + " - " + self._time, offset + self._margin, 6)
         
     def SetText(self, string):
         self._text = string
@@ -313,15 +386,29 @@ class VolumeSliderKnob(wx.Control):
         #bitmap
         self.knob_bmp = vol_slider_ctrl_knob.GetBitmap()
         
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(wx.EVT_LEFT_DOWN, self.OnClick)
         self.Bind(wx.EVT_LEFT_UP, self.OnClickUp)
         self.Bind(wx.EVT_MOTION, self.OnMotion)
         self.Bind(wx.EVT_ENTER_WINDOW, self.OnEnter)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.OnLeave)
         
-    def OnPaint(self, evt):
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
+        dc.DrawBitmap(self.knob_bmp,0,0)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+
         dc.DrawBitmap(self.knob_bmp,0,0)
         
     def OnClick(self, evt):
@@ -380,19 +467,55 @@ class VolumeSlider(wx.Control):
         self._knob = VolumeSliderKnob(self)
         self._maxPosX = self._length-(self._knob.GetSize()[0]/2)
         self.setValue(self._value)
-        
-        #initialize de track bitmap by creating a buffer
-        self._createTrackBitmap()
-        
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+
+        # bitmaps
+        self.left_bmp = vol_slider_ctrl_track_left_end.GetBitmap()
+        self.right_bmp = vol_slider_ctrl_track_right_end.GetBitmap()
+        self.track_bmp = vol_slider_ctrl_track.GetBitmap()
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+            self._buffer = wx.EmptyBitmap(self.GetSize()[0], self.GetSize()[1])
+
         self.Bind(EVT_KNOB_CLICKED, self.OnClick)
         self.Bind(EVT_KNOB_UP, self.OnClickUp)
         self.Bind(EVT_KNOB_DRAG, self.OnMotion)
         self.Bind(EVT_KNOB_ENTER, self.OnEnter)
         self.Bind(EVT_KNOB_LEAVE, self.OnLeave)
         
-    def OnPaint(self, evt):
-        dc = wx.BufferedPaintDC(self, self._track)
+    def OnPaintMac(self, evt):
+        dc = wx.PaintDC(self)
+        self._drawTrackBitmap(dc)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.BufferedPaintDC(self, self._buffer)
+
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+
+        self._drawTrackBitmap(dc)
+
+    def GetRegion(self, x, y, w, h):
+        bmp = wx.EmptyBitmap(w, h)
+        dc = wx.MemoryDC(bmp)
+
+        # get region underneath widget
+        posx, posy = self.GetPositionTuple()
+        parent_region = self.Parent.GetRegion(posx + x, posy + y, w, h)
+        dc.DrawBitmap(parent_region, 0, 0)
+
+        img = self._buffer.ConvertToImage()
+        region = img.GetSubImage(wx.Rect(x, y, w, h))
+        dc.DrawBitmap(wx.BitmapFromImage(region), 0, 0)
+
+        dc.SelectObject(wx.NullBitmap)
+        dc.Destroy()
+
+        return bmp
         
     def OnClick(self, evt):
         self._clickPos = evt.GetMousePosition()
@@ -408,25 +531,18 @@ class VolumeSlider(wx.Control):
         self._updateValue()
         
     def OnEnter(self, evt):
-        pass
+        evt.Skip()
         
     def OnLeave(self, evt):
-        pass
+        evt.Skip()
         
-    def _createTrackBitmap(self):
+    def _drawTrackBitmap(self, dc):
         w,h = self.GetSize()
-        self._track = wx.EmptyBitmap(w,h)
-        dc = wx.BufferedDC(None, self._track)
         
-        #bitmaps
-        left_bmp = vol_slider_ctrl_track_left_end.GetBitmap()
-        right_bmp = vol_slider_ctrl_track_right_end.GetBitmap()
-        track_bmp = vol_slider_ctrl_track.GetBitmap()
-        
-        dc.DrawBitmap(left_bmp,0,3)
+        dc.DrawBitmap(self.left_bmp,0,3)
         for i in range(6,self._length+1):
-            dc.DrawBitmap(track_bmp,i,3)
-        dc.DrawBitmap(right_bmp,self._length+1,3)
+            dc.DrawBitmap(self.track_bmp,i,3)
+        dc.DrawBitmap(self.right_bmp,self._length+1,3)
         
     def _updateValue(self):
         self._value = self._knob.GetPosition()[0]/float(self._maxPosX)
@@ -462,7 +578,11 @@ class VuMeter(wx.Panel):
         #sets the height of the panel and creates the buffer
         self.setNumSliders(numSliders)
         
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(wx.EVT_CLOSE, self.OnClose)   
 
     def _createAlphaMeterBitmaps(self):
@@ -501,12 +621,26 @@ class VuMeter(wx.Panel):
     def reset(self):
         self.amplitude = [0 for i in range(self.numSliders)]
         wx.CallAfter(self.Refresh)
-        
-    def OnPaint(self, evt):
-        w,h = self.GetSize()
+
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
+        self._drawMeters(dc)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+
+        self._drawMeters(dc)
+
+    def _drawMeters(self, dc):
+        w,h = self.GetSize()
+
         for i in range(self.numSliders):
-            db = utils.clipper(math.log10(self.amplitude[i]+0.000001) * 0.2 + 1., 0., 1.)
+            db = PSUtils.clipper(math.log10(self.amplitude[i] + 0.000001) * 0.2 + 1., 0., 1.)
             self.lastValue[i] = db
             width = int(db*w)
             indexHalfOn = width%20
@@ -669,13 +803,17 @@ class PSSmallRotaryKnob(wx.Control):
         self.knob_bmp = rotary_knob.GetBitmap()
         self.bmp_w, self.bmp_h = self.knob_bmp.GetSize()
         
-        self.font = wx.Font(config.FONT_SIZE["adsr"], wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self._font = wx.Font(**PSConfig.FONTS['light']['xsmall'])
         self.setText(text)
         
         self._hideValueTimer = wx.Timer(self, -1)
-        
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(wx.EVT_TIMER, self._hideValue)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
@@ -685,10 +823,22 @@ class PSSmallRotaryKnob(wx.Control):
         self._midictl = Midictl(self.ctl_num, self._min, self._max)
         self._change = Change(self._midictl).stop()
         self._trigFunc = TrigFunc(self._change, self._setValueFromCtl).stop()
-    
-    def OnPaint(self, evt):
+
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
-        dc.SetFont(self.font)
+        self.OnPaintGeneric(dc)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+
+        self.OnPaintGeneric(dc)
+
+    def OnPaintGeneric(self, dc):
+        dc.SetFont(self._font)
         if self.IS_CONTROLLED or self.MIDI_LEARN:
             dc.SetTextForeground("#d8ff00")
         else:
@@ -844,7 +994,7 @@ class PSSmallRotaryKnob(wx.Control):
         """
         self._text = text
         dc = wx.ClientDC(self)
-        dc.SetFont(self.font)
+        dc.SetFont(self._font)
         tw,th = dc.GetTextExtent(self._text)
         if tw > self.bmp_w:
             self._bmpMargin = (tw-self.bmp_w)/2
@@ -897,17 +1047,18 @@ class PSClick(wx.Control):
         self._tempo = tempo
         #metronome is playing at creation time
         self._metronome = Click(tempo, nchnls)
-        self._btn = buttons.PSClickButton(self, (95,0))
+        self._btn = PSButtons.PSClickButton(self, (95, 0))
         self._btn.disable()
         
         #variables d'etat
         self._outputting = False
-        
+
+        self._font = wx.Font(**PSConfig.FONTS['light']['large'])
         #bitmaps
         self.ctrl_bmp = click_bpm_ctrl.GetBitmap()
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(buttons.EVT_BTN_CLICKED, self.OnClick)
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self.OnClick)
         self.Bind(wx.EVT_LEFT_DCLICK, self.OnDoubleClick)
         
     def __getitem__(self, i):
@@ -919,13 +1070,12 @@ class PSClick(wx.Control):
         
     def OnPaint(self, evt):
         dc = wx.PaintDC(self)
-        font = wx.Font(14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        dc.SetFont(font)
+        dc.SetFont(self._font)
         dc.SetTextForeground("#fefefe")
         
         dc.DrawBitmap(self.ctrl_bmp,0,0)
         tw,th = dc.GetTextExtent("%.2f bpm"%self._tempo)
-        dc.DrawText("%.2f bpm"%self._tempo,(95-tw)/2,9)
+        dc.DrawText("%.2f bpm" % self._tempo, (95-tw) / 2, 9 - PSConfig.Y_OFFSET)
         
     def OnClick(self, evt):
         if self._outputting:
@@ -944,7 +1094,7 @@ class PSClick(wx.Control):
         self.tempoCtrl.Bind(wx.EVT_TEXT_ENTER, self.setTempoByEvent)
         self.tempoCtrl.SetBackgroundColour("#102D3D")
         self.tempoCtrl.SetForegroundColour("#fefefe")
-        self.tempoCtrl.SetFont(wx.Font(14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica"))
+        self.tempoCtrl.SetFont(self._font)
         
     def setTempoByEvent(self, evt):
         try:

@@ -22,18 +22,32 @@ import os
 import sys
 import pickle
 import time
+import wx
 
 #--------------------------------------------
 #--------------- Constantes -----------------
 #--------------------------------------------
-VERSIONS = {'Pyo Synth':"0.1.2b", 'pyo':(0,8,3), 'python':(2,7,13)}
+VERSIONS = {'Pyo Synth':"0.1.2b", 'pyo':(0,8,4), 'python':(2,7,13)}
 PLATFORM = sys.platform
 crash_save_func = None
 hide_main_win = None
 UNIT_SIZE = (130,110)
 WHEELS_BOX_WIDTH = 100
 NB_ELEM_ROW = 8
-FONT_SIZE = {"unused":12,"title":14, "midilearn":16,"value":25,"dB_value":23,"adsr":10}
+
+if PLATFORM == 'linux2':
+    Y_OFFSET = 3
+    X_OFFSET = 1
+    USE_TRANSPARENCY = False
+elif PLATFORM == 'win32':
+    Y_OFFSET = 0
+    X_OFFSET = 0
+    USE_TRANSPARENCY = False
+elif PLATFORM == 'darwin':
+    Y_OFFSET = 0
+    X_OFFSET = 0
+    USE_TRANSPARENCY = True
+
 REFRESH_RATE = 1./13
 BG_COLOUR = "#333333"
 STATS_BAR_HGT = 49
@@ -76,6 +90,49 @@ while count<128:
     if i==12:
         octave += 1
         i=0
+
+# -------------------------------------------------------
+# --------------- wx.Font pout le projet ----------------
+# -------------------------------------------------------
+if PLATFORM == 'darwin':
+    x = 0
+    monofont = 'Monaco'
+elif PLATFORM == "linux2":
+    x = 2
+    monofont = 'Consolas'
+elif PLATFORM == 'win32':
+    x = 2
+    monofont = 'Consolas'
+
+FONTS = {'light':{'xsmall':{'pointSize':10-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'small':{'pointSize':11-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'norm':{'pointSize':12-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'med':{'pointSize':13-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'large':{'pointSize':14-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'title1':{'pointSize':16-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                  'title2':{'pointSize':17-x, 'family':wx.FONTFAMILY_SWISS,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"}},
+         'bold':{'xsmall':{'pointSize':10-x, 'family':wx.FONTFAMILY_MODERN,
+                           'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD},
+                  'norm':{'pointSize':12-x, 'family':wx.FONTFAMILY_MODERN,
+                          'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD},
+                  'large':{'pointSize':14-x, 'family':wx.FONTFAMILY_MODERN,
+                           'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD},
+                  'title1':{'pointSize':16-x, 'family':wx.FONTFAMILY_MODERN,
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD},
+                  'large_title':{'pointSize':23-x, 'family':wx.FONTFAMILY_MODERN,
+                                 'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD},
+                  'xl_title':{'pointSize':25-x, 'family':wx.FONTFAMILY_MODERN,
+                              'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_BOLD}},
+         'terminal':{'pointSize':11-x, 'family':wx.FONTFAMILY_MODERN, 'style':wx.FONTSTYLE_NORMAL,
+                     'weight':wx.FONTWEIGHT_NORMAL, 'face':monofont}
+         }
 
 #-------------------------------------------------------
 #----- Chemin vers dossiers/fichiers du programme ------

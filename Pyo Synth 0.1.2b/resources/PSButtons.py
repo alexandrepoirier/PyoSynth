@@ -20,6 +20,7 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 import wx
 import buttonsPyImg as BPY
+import PSConfig
 
 myEVT_BTN_CLICKED = wx.NewEventType()
 EVT_BTN_CLICKED = wx.PyEventBinder(myEVT_BTN_CLICKED, 1)
@@ -77,7 +78,9 @@ class PSButtonBase(wx.Control):
         self.Bind(wx.EVT_LEFT_UP, self.OnClickUp)
 
     def OnPaint(self, evt):
-        dc = wx.PaintDC(self)
+        # this allows for easy method overriding
+        if not hasattr(self, 'dc'):
+            dc = wx.PaintDC(self)
         
         if self._clicked:
             dc.DrawBitmap(self.clicked, 0, 0)
@@ -163,29 +166,45 @@ class RunButton(PSButtonBase):
         self.hover = BPY.run_btn_hover.GetBitmap()
         self.clicked = BPY.run_btn_clicked.GetBitmap()
         
-        self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        self.textCtrl = wx.StaticText(self, -1, "RUN", (8,6))
-        self.textCtrl.SetFont(self.font)
+        self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
+        self.textCtrl = wx.StaticText(self, -1, "RUN", (8 - PSConfig.X_OFFSET, 6 - PSConfig.Y_OFFSET))
+        self.textCtrl.SetFont(self._font)
         self.textCtrl.SetForegroundColour("#6cff00")
         
         self._RUNNING = False
-        
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(EVT_BTN_CLICKED, self.ToggleState)
         self.textCtrl.Bind(wx.EVT_ENTER_WINDOW, self.MouseIn)
         self.textCtrl.Bind(wx.EVT_LEAVE_WINDOW, self.MouseOut)
         self.textCtrl.Bind(wx.EVT_LEFT_DOWN, self.OnClick)
         self.textCtrl.Bind(wx.EVT_LEFT_UP, self.OnClickUp)
 
+    def OnPaintMac(self, evt):
+        PSButtonBase.OnPaint(self, evt)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+        PSButtonBase.OnPaint(self, evt)
+
     def ToggleState(self, event=None):
         if self._RUNNING:
             self._RUNNING = False
             self.textCtrl.SetLabel("RUN")
-            self.textCtrl.SetPosition((8,6))
+            self.textCtrl.SetPosition((8 - PSConfig.X_OFFSET, 6 - PSConfig.Y_OFFSET))
             self.textCtrl.SetForegroundColour("#6cff00")
         else:
             self._RUNNING = True
             self.textCtrl.SetLabel("STOP")
-            self.textCtrl.SetPosition((6,6))
+            self.textCtrl.SetPosition((6 - PSConfig.X_OFFSET, 6 - PSConfig.Y_OFFSET))
             self.textCtrl.SetForegroundColour("#ff7f00")
         if event is not None:
             #Custom event business
@@ -201,7 +220,6 @@ class RunButton(PSButtonBase):
         self.textCtrl.SetForegroundColour("#6cff00")
         PSButtonBase.enable(self)
 
-
 class RecButton(PSButtonBase):
     def __init__(self, parent, pos):
         PSButtonBase.__init__(self, parent, pos, (37,37))
@@ -212,9 +230,25 @@ class RecButton(PSButtonBase):
         self.clicked = BPY.rec_btn_clicked.GetBitmap()
         
         self._running = False
-        
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(EVT_BTN_CLICKED, self.ToggleState)
-        
+
+    def OnPaintMac(self, evt):
+        PSButtonBase.OnPaint(self, evt)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        bmp = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(bmp, 0, 0)
+        PSButtonBase.OnPaint(self, evt)
+
     def ToggleState(self, event):
         self._running = not self._running
         #Custom event business
@@ -234,13 +268,29 @@ class OpenRecButton(PSButtonBase):
         self.clicked = BPY.rec_txt_btn_up.GetBitmap()
         
         self._open = False
-        
+
+        if PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+        elif PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+
         self.Bind(EVT_BTN_CLICK_UP, self.ToggleState)
         
-    #override the OnPaint function to reflect the state
-    def OnPaint(self, evt):
+    def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
-        
+        self.OnPaintGeneric(dc)
+
+    def OnPaintLinux(self, evt):
+        dc = wx.PaintDC(self)
+
+        posx, posy = self.GetPositionTuple()
+        w, h = self.GetSizeTuple()
+        region = self.Parent.GetRegion(posx, posy, w, h)
+        dc.DrawBitmap(region, 0, 0)
+
+        self.OnPaintGeneric(dc)
+
+    def OnPaintGeneric(self, dc):
         if self._open:
             dc.DrawBitmap(self.clicked, 0, 0)
         elif not self._enabled:
@@ -273,7 +323,7 @@ class PlayTrackButton(wx.Control):
         
     def OnPaint(self, evt):
         dc = wx.PaintDC(self)
-        
+
         if self._playing:
             if self._clicked:
                 dc.DrawBitmap(self.clicked_pause, 1, 2)
@@ -376,6 +426,7 @@ class RectangleStateButton(wx.Control):
         self._brush_colours = ["#3d3d3d","#202020"]
         self._pen_colours = ["#3d3d3d","#CFCFCF"]
         self._selected = 0
+        self._font = wx.Font(**PSConfig.FONTS['light']['xsmall'])
         
         self.Bind(wx.EVT_PAINT, self.OnPaint)
         self.Bind(wx.EVT_LEFT_DOWN, self.MouseDown)
@@ -389,7 +440,7 @@ class RectangleStateButton(wx.Control):
         dc.DrawRectangle(0,0,w,h)
         
         dc.SetTextForeground("#CFCFCF")
-        dc.SetFont(wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica"))
+        dc.SetFont(self._font)
         text = "%d"%self._value
         tw,th = dc.GetTextExtent(text)
         dc.DrawText(text, (w-tw)/2, (h-th)/2+1)
@@ -416,7 +467,7 @@ class PSRectangleButton(wx.Control):
     def __init__(self, parent, pos, size, text, id=-1):
         wx.Control.__init__(self, parent, id, pos, size, style=wx.NO_BORDER)
         
-        self._font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
         self._brush_colours = ["#3d3d3d","#202020"]
         self._pen_colours = ["#3d3d3d","#f0f4d7"]
         self._clicked = 0
@@ -490,6 +541,7 @@ class PSClickButton(PSButtonBase):
         self.clicked = BPY.click_btn_clicked.GetBitmap()
         self.disabled = BPY.click_btn_normal.GetImage().ConvertToGreyscale().ConvertToBitmap()
 
+        self._font = wx.Font(**PSConfig.FONTS['light']['large'])
         self._state = False
         
     def OnPaint(self, evt):
@@ -503,11 +555,10 @@ class PSClickButton(PSButtonBase):
             dc.DrawBitmap(self.disabled, 0, 0)
         else:
             dc.DrawBitmap(self.normal, 0, 0)
-            
-        font = wx.Font(14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        dc.SetFont(font)
+
+        dc.SetFont(self._font)
         dc.SetTextForeground("#fefefe")
         if self._state:
-            dc.DrawText("On",14,9)
+            dc.DrawText("On", 14, 9 - PSConfig.Y_OFFSET)
         else:
-            dc.DrawText("Off",14,9)
+            dc.DrawText("Off", 14, 9 - PSConfig.Y_OFFSET)

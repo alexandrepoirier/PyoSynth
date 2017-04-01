@@ -18,12 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import pickle, config, os
+import pickle, PSConfig, os
 
 PARAMS_TREE_DICT = {}
 
 try:
-    with open(os.path.join(config.PREF_PATH,"audio_rate_params_dict.txt")) as f:
+    with open(os.path.join(PSConfig.PREF_PATH, "audio_rate_params_dict.txt")) as f:
         PARAMS_TREE_DICT = pickle.load(f)
 except IOError, e:
-    raise IOError, "Can't open pyo objects parameters dictionnary."
+    raise IOError, "Can't open pyo objects parameters dictionary."

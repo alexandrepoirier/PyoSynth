@@ -26,20 +26,23 @@ import pickle
 import shutil
 import traceback
 import os
-
-from pyo import *
 import wx
 import psutil
 from send2trash import send2trash
 
 # PyoSynth custom modules import
-import audio
-import buttons
-import controls
-import config
-import utils
+import PSAudio
+import PSButtons
+import PSControls
+import PSConfig
+import PSUtils
 import interfacePyImg as imgs
 from pyoParamTree import PARAMS_TREE_DICT
+
+if PSConfig.PLATFORM == 'linux2':
+    from pyo64 import *
+else:
+    from pyo import *
 
 
 myEVT_SAVE_TRACK = wx.NewEventType()
@@ -49,7 +52,7 @@ class RecordedTrackEvent(wx.PyCommandEvent):
     def __init__(self, evtType, id):
         wx.PyCommandEvent.__init__(self, evtType, id)
         self._track_path = ""
-        self._default_dir = config.HOME_PATH
+        self._default_dir = PSConfig.HOME_PATH
         self._default_file = ""
         self._style = wx.DEFAULT_DIALOG_STYLE
         self._message = ""
@@ -119,17 +122,17 @@ class RecordedTrackElement(wx.Panel):
             self._select_clr = wx.Colour(90, 90, 90, 255)
             self._norm_clr = wx.Colour(90, 90, 90, 20)
 
-        self._norm_font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        self._small_font = wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self._norm_font = wx.Font(**PSConfig.FONTS['light']['norm'])
+        self._small_font = wx.Font(**PSConfig.FONTS['light']['xsmall'])
 
         # buttons
-        self.play_btn = buttons.PlayTrackButton(self, (5, 20))
-        self.stop_btn = buttons.StopTrackButton(self, (19, 22))
-        self.save_btn = buttons.SaveTrackButton(self, (100, 4))
-        self.delete_btn = buttons.DeleteTrackButton(self, (118, 5))
+        self.play_btn = PSButtons.PlayTrackButton(self, (5, 20))
+        self.stop_btn = PSButtons.StopTrackButton(self, (19, 22))
+        self.save_btn = PSButtons.SaveTrackButton(self, (100, 4))
+        self.delete_btn = PSButtons.DeleteTrackButton(self, (118, 5))
 
         # marqueur de progression de lecture
-        self.progression_bar = controls.TrackProgressionBar(self, (38, 25))
+        self.progression_bar = PSControls.TrackProgressionBar(self, (38, 25))
         self._progression_time = 0.
 
         # binding events
@@ -143,10 +146,10 @@ class RecordedTrackElement(wx.Panel):
         self.progression_bar.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseIn)
         self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseOut)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseScroll)
-        self.Bind(buttons.EVT_BTN_PLAY, self._playTrack)
-        self.Bind(buttons.EVT_BTN_STOP, self._stopTrack)
-        self.Bind(buttons.EVT_BTN_CLICKED, self._saveTrack, self.save_btn)
-        self.Bind(buttons.EVT_BTN_CLICKED, self._deleteTrack, self.delete_btn)
+        self.Bind(PSButtons.EVT_BTN_PLAY, self._playTrack)
+        self.Bind(PSButtons.EVT_BTN_STOP, self._stopTrack)
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self._saveTrack, self.save_btn)
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self._deleteTrack, self.delete_btn)
 
     def OnPaint(self, evt):
         w, h = self.GetSize()
@@ -250,7 +253,7 @@ class RecordedTrackElement(wx.Panel):
         # Custom event business
         event = RecordedTrackEvent(myEVT_SAVE_TRACK, self.GetId())
         event.SetTrackPath(self._path)
-        event.SetDefaultDir(config.HOME_PATH)
+        event.SetDefaultDir(PSConfig.HOME_PATH)
         event.SetDefaultFile(".wav")
         event.SetStyle(wx.SAVE)
         event.SetMessage("Save Track")
@@ -258,7 +261,7 @@ class RecordedTrackElement(wx.Panel):
         self.GetEventHandler().ProcessEvent(event)
 
     def _deleteTrack(self, evt):
-        utils.printMessage("Trashed file: %s" % self._path, 1)
+        PSUtils.printMessage("Trashed file: %s" % self._path, 1)
         send2trash(self._path)
         self._removeTrack()
 
@@ -381,7 +384,7 @@ class RecordedTracksWindow(wx.Frame):
         self.pos_offset = wx.Point(295, 94)
 
         # s'occupe de l'enregistrement
-        self._trackRecorder = audio.TrackRecorder()
+        self._trackRecorder = PSAudio.TrackRecorder()
 
         # Fade in/out properties
         self.IS_SHOWN = False
@@ -401,16 +404,16 @@ class RecordedTracksWindow(wx.Frame):
         self._checkRecFolderOnInit()
 
     def _checkRecFolderOnInit(self):
-        utils.printMessage("Scanning rec folder for files...", 1)
-        if os.path.exists(config.REC_PATH):
-            for root, dirs, files in os.walk(config.REC_PATH):
+        PSUtils.printMessage("Scanning rec folder for files...", 1)
+        if os.path.exists(PSConfig.REC_PATH):
+            for root, dirs, files in os.walk(PSConfig.REC_PATH):
                 for file in files:
                     if 'DS_Store' in file:
                         pass
                     else:
                         self.__track_count__ += 1
                         path = os.path.join(root, file)
-                        utils.printMessage("Found: %s" % path, 1)
+                        PSUtils.printMessage("Found: %s" % path, 1)
                         self.tracks_list.addTrack(path, self.__track_count__, True)
 
     def OnPaint(self, evt):
@@ -487,11 +490,15 @@ class ServerSetupEvent(wx.PyCommandEvent):
         wx.PyCommandEvent.__init__(self, evtType, id)
 
 
+class ServerNotBootedError(Exception):
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, args, kwargs)
+
+
 class ServerSetupPanel(wx.Panel):
     def __init__(self, parent, server):
         wx.Panel.__init__(self, parent, -1, (640, 61), (500, 260))
         self.SetBackgroundColour("#000000")
-        self.SetTransparent(0)
         self.Show(False)
 
         self._server = server
@@ -508,11 +515,14 @@ class ServerSetupPanel(wx.Panel):
 
         # Fade in/out properties
         self.IS_SHOWN = False
-        self._alpha = 220
-        self._currentAlpha = 0
-        self._delta = 50
-        self._fadeTime = 55
-        self._timer = wx.Timer(self, -1)
+        if PSConfig.USE_TRANSPARENCY:
+            self.SetTransparent(0)
+            self._alpha = 220
+            self._currentAlpha = 0
+            self._delta = 50
+            self._fadeTime = 55
+            self._timer = wx.Timer(self, -1)
+            self.Bind(wx.EVT_TIMER, self.changeAlpha)
 
         # Setup lists
         self.samplingRates = ['22050 Hz', '32000 Hz', '44100 Hz', '48000 Hz', '88200 Hz', '96000 Hz']
@@ -558,7 +568,6 @@ class ServerSetupPanel(wx.Panel):
 
         # Binding events
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_TIMER, self.changeAlpha)
         self.Bind(wx.EVT_CHOICE, self.changeInput, self.inputChoice)
         self.Bind(wx.EVT_CHOICE, self.changeOutput, self.outputChoice)
         self.Bind(wx.EVT_CHOICE, self.changeMidiInput, self.midiInputChoice)
@@ -584,9 +593,9 @@ class ServerSetupPanel(wx.Panel):
         dc.DrawLine(w - penWidth, h - penWidth, w - penWidth, 0)
 
         # fonts
-        titleFont = wx.Font(16, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        regFont = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        smallFont = wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        titleFont = wx.Font(**PSConfig.FONTS['light']['title1'])
+        regFont = wx.Font(**PSConfig.FONTS['light']['norm'])
+        smallFont = wx.Font(**PSConfig.FONTS['light']['xsmall'])
 
         # Titre
         dc.SetTextForeground("#FFFFFF")
@@ -625,11 +634,15 @@ class ServerSetupPanel(wx.Panel):
         self.updateCtrls()
         self.IS_SHOWN = True
         self.Show(True)
-        self._timer.Start(self._fadeTime)
+        if PSConfig.USE_TRANSPARENCY:
+            self._timer.Start(self._fadeTime)
 
     def HideWindow(self):
         self.IS_SHOWN = False
-        self._timer.Start(self._fadeTime)
+        if PSConfig.USE_TRANSPARENCY:
+            self._timer.Start(self._fadeTime)
+        else:
+            self.Show(False)
         self.savePreferences()
 
     def IsShown(self):
@@ -770,7 +783,7 @@ class ServerSetupPanel(wx.Panel):
         Done once upon startup. If preferences values aren't valid anymore, the default settings are restored.
         """
         try:
-            f = open(os.path.join(config.PREF_PATH, "server_setup.pref"), 'r')
+            f = open(os.path.join(PSConfig.PREF_PATH, "server_setup.pref"), 'r')
             self.hasPreferences = True
         except IOError, e:
             self.hasPreferences = False
@@ -804,7 +817,7 @@ class ServerSetupPanel(wx.Panel):
 
     def savePreferences(self):
         try:
-            f = open(os.path.join(config.PREF_PATH, "server_setup.pref"), 'w')
+            f = open(os.path.join(PSConfig.PREF_PATH, "server_setup.pref"), 'w')
         except IOError, e:
             print "Could not write server preferences to disk.", e
         else:
@@ -848,14 +861,15 @@ class ServerSetupPanel(wx.Panel):
                             self.preferences['bfs'],
                             self.preferences['duplex'],
                             self.preferences['audio'],
-                            jackname="pyo")
+                            jackname="PyoSynth")
         self._server.setOutputDevice(self.preferences['output'])
         self._server.setMidiOutputDevice(self.preferences['midi_output'])
         if self.preferences['duplex']:
             self._server.setInputDevice(self.preferences['input'])
             self._server.setMidiInputDevice(self.preferences['midi_input'])
         self._server.boot()
-        time.sleep(.2)
+        if self._waitForServerToBoot():
+            raise ServerNotBootedError, "Timeout expired: Server wasn't able to boot."
 
     def initServerForExport(self):
         self.SERVER_CHANGED_FLAG = True
@@ -869,8 +883,21 @@ class ServerSetupPanel(wx.Panel):
                             self.preferences['bfs'],
                             self.preferences['duplex'],
                             audio="offline",
-                            jackname="pyo")
+                            jackname="PyoSynth")
         self._server.boot()
+        if self._waitForServerToBoot():
+            raise ServerNotBootedError, "Timeout expired: Server wasn't able to boot."
+
+    def _waitForServerToBoot(self):
+        timeout = 10
+        time_count = 0
+        time_delay = .1
+        while time_count < timeout:
+            if self._server.getIsBooted():
+                return 0
+            time.sleep(time_delay)
+            time_count += time_delay
+        return 1
 
     def startServer(self):
         self._server.start()
@@ -1028,11 +1055,10 @@ class PatchWindow(wx.Frame):
     """
     def __init__(self, parent, namespace):
         wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
-        self.SetTransparent(0)
         self.panel = wx.Panel(self, size=self.GetSize() + (1, 1))
         self.treeCtrl = wx.TreeCtrl(self.panel, size=self.panel.GetSize() - (4, 26), pos=(1, 23),
                                     style=wx.TR_DEFAULT_STYLE | wx.TR_HIDE_ROOT)
-        self.treeCtrl.SetBackgroundColour(config.BG_COLOUR)
+        self.treeCtrl.SetBackgroundColour(PSConfig.BG_COLOUR)
         self.treeCtrl.SetForegroundColour("#DDDDDD")
 
         self.script_namespace = namespace
@@ -1053,11 +1079,14 @@ class PatchWindow(wx.Frame):
 
         # Fade in/out properties
         self.IS_SHOWN = False
-        self._alpha = 240
-        self._currentAlpha = 0
-        self._delta = 22
-        self._fadeTime = 27
-        self._timer = wx.Timer(self, -1)
+        if PSConfig.USE_TRANSPARENCY:
+            self.SetTransparent(0)
+            self._alpha = 240
+            self._currentAlpha = 0
+            self._delta = 22
+            self._fadeTime = 27
+            self._timer = wx.Timer(self, -1)
+            self.Bind(wx.EVT_TIMER, self.changeAlpha)
 
         # conserve une reference de l'objet ParamBox pour qui la fenetre s'est ouverte
         self._obj = None
@@ -1070,7 +1099,6 @@ class PatchWindow(wx.Frame):
         self.background = imgs.patch_window_bg.GetBitmap()
 
         # Binding events
-        self.Bind(wx.EVT_TIMER, self.changeAlpha)
         self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
         self.treeCtrl.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelection, self.treeCtrl)
@@ -1146,13 +1174,17 @@ class PatchWindow(wx.Frame):
         if not self.IS_SHOWN:
             self.IS_SHOWN = True
             self.Show(True)
-            self._timer.Start(self._fadeTime)
+            if PSConfig.USE_TRANSPARENCY:
+                self._timer.Start(self._fadeTime)
 
     def HideWindow(self):
         self.selection = None
         self._obj = None
         self.IS_SHOWN = False
-        self._timer.Start(self._fadeTime)
+        if PSConfig.USE_TRANSPARENCY:
+            self._timer.Start(self._fadeTime)
+        else:
+            self.Show(False)
 
     def _hideWindow(self, evt):
         evt.Skip()
@@ -1203,8 +1235,8 @@ class WarningWindow(wx.Frame):
         self.panel = wx.Panel(self, size=WarningWindow.min_size + (1, 1))
         self.panel.SetBackgroundColour("#888888")
 
-        self._normal_font = wx.Font(13, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        self._small_font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self._normal_font = wx.Font(**PSConfig.FONTS['light']['med'])
+        self._small_font = wx.Font(**PSConfig.FONTS['light']['norm'])
         self._top_line = text
         self._bottom_line = None
         self._y_margin = 12
@@ -1430,7 +1462,7 @@ class ParamBoxSettingsWindow(wx.Frame):
         # draw bg
         dc.DrawBitmap(self.background, 0, 0)
 
-        font = wx.Font(11, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        font = wx.Font(**PSConfig.FONTS['light']['small'])
 
         # Texte
         dc.SetTextForeground("#FFFFFF")
@@ -1496,7 +1528,7 @@ class ParamBoxSettingsWindow(wx.Frame):
 
 class WheelsBox(wx.Panel):
     def __init__(self, parent, bend_obj, mod_obj, pos, height):
-        wx.Panel.__init__(self, parent, -1, pos=pos, size=(config.WHEELS_BOX_WIDTH, height))
+        wx.Panel.__init__(self, parent, -1, pos=pos, size=(PSConfig.WHEELS_BOX_WIDTH, height))
         self._bg_colour = (45, 46, 38)
         self.SetBackgroundColour(self._bg_colour)
         self.parent = parent
@@ -1517,8 +1549,7 @@ class WheelsBox(wx.Panel):
         self.background = imgs.bend_mod_bg.GetBitmap()
         # empty bitmap to store a snapshot of the parambox if idle
         self.buffer = wx.EmptyBitmap(self.width, self.height)
-        self.titleFont = wx.Font(config.FONT_SIZE['title'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                 wx.FONTWEIGHT_BOLD)
+        self.titleFont = wx.Font(**PSConfig.FONTS['bold']['large'])
 
         self._initBoxCoords()
 
@@ -1719,14 +1750,24 @@ class BoxBase(wx.Panel):
         self.hijack_inactive_bg = imgs.param_box_hijack_inactive_bg.GetBitmap()
 
         # colours
-        self.active_color = "#d8ff00"
-        self.inactive_color = "#f0f4d7"
-        self.hijack_color = "#6cff00"
-        self.hijack_inactive_color = "#70a34f"
-        self.active_fill_color = (216, 255, 0, 51)
-        self.inactive_fill_color = (240, 244, 215, 38)
-        self.hijack_fill_color = (108, 255, 0, 51)
-        self.hijack_inactive_fill_color = (112, 163, 79, 38)
+        if PSConfig.PLATFORM == 'darwin':
+            self.active_color = "#d8ff00"
+            self.inactive_color = "#f0f4d7"
+            self.hijack_color = "#6cff00"
+            self.hijack_inactive_color = "#70a34f"
+            self.active_fill_color = (216, 255, 0, 51)
+            self.inactive_fill_color = (240, 244, 215, 38)
+            self.hijack_fill_color = (108, 255, 0, 51)
+            self.hijack_inactive_fill_color = (112, 163, 79, 38)
+        elif PSConfig.PLATFORM in ('win32', 'linux2'):
+            self.active_color = "#d8ff00"
+            self.inactive_color = "#e6ff74"
+            self.hijack_color = "#6cff00"
+            self.hijack_inactive_color = "#c2ff7c"
+            self.active_fill_color = (194, 172, 25)
+            self.inactive_fill_color = (99, 98, 34)
+            self.hijack_fill_color = (96, 162, 56)
+            self.hijack_inactive_fill_color = (60, 88, 31)
 
         # Variables generales
         self.parent = parent
@@ -1771,7 +1812,7 @@ class ParamBox(BoxBase):
     """
 
     def __init__(self, parent, pos, title, obj):
-        BoxBase.__init__(self, parent, pos=pos, size=config.UNIT_SIZE)
+        BoxBase.__init__(self, parent, pos=pos, size=PSConfig.UNIT_SIZE)
 
         # Variables generales
         self.text = title
@@ -1792,16 +1833,11 @@ class ParamBox(BoxBase):
         self.last_midi_ctl_value = 0. # stores the value of the midi ctl before hijack begins
 
         # fonts
-        self.valueFont = wx.Font(config.FONT_SIZE['value'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                 wx.FONTWEIGHT_BOLD)
-        self.dBvalueFont = wx.Font(config.FONT_SIZE['dB_value'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                 wx.FONTWEIGHT_BOLD)
-        self.titleFont = wx.Font(config.FONT_SIZE['title'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                 wx.FONTWEIGHT_BOLD)
-        self.unusedFont = wx.Font(config.FONT_SIZE['unused'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                  wx.FONTWEIGHT_BOLD)
-        self.midiLearnFont = wx.Font(config.FONT_SIZE['midilearn'], wx.FONTFAMILY_MODERN, wx.FONTSTYLE_NORMAL,
-                                     wx.FONTWEIGHT_BOLD)
+        self.valueFont = wx.Font(**PSConfig.FONTS['bold']['xl_title'])
+        self.dBvalueFont = wx.Font(**PSConfig.FONTS['bold']['large_title'])
+        self.titleFont = wx.Font(**PSConfig.FONTS['bold']['large'])
+        self.unusedFont = wx.Font(**PSConfig.FONTS['bold']['norm'])
+        self.midiLearnFont = wx.Font(**PSConfig.FONTS['bold']['title1'])
 
         # state variable
         self.IDLE = False # True quand le dessin est a jour et que la boite n'est pas en train d'etre modifiee
@@ -1812,9 +1848,10 @@ class ParamBox(BoxBase):
         self.DISPLAY_DB = False
 
         # empty bitmap to store a snapshot of the parambox if idle
-        self.buffer = wx.EmptyBitmap(config.UNIT_SIZE[0], config.UNIT_SIZE[1])
+        self.buffer = wx.EmptyBitmap(PSConfig.UNIT_SIZE[0], PSConfig.UNIT_SIZE[1])
 
         # Binding events
+        self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.OnMouseCaptureLost)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
@@ -2026,6 +2063,10 @@ class ParamBox(BoxBase):
         dc.DrawLines(points)
 
     def OnMouseMove(self, evt):
+        if self.HasCapture():
+            print 'yes'
+        else:
+            print 'no'
         if self.CLICKED:
             if not self.DRAGGED:
                 self.DRAGGED = True
@@ -2038,7 +2079,7 @@ class ParamBox(BoxBase):
 
     def OnMouseDown(self, evt):
         self.CLICKED = True
-        self.CaptureMouse()
+        #self.CaptureMouse()
         self.mouse_y_org = wx.GetMousePosition()[1]
         self.org_hijack_value = self.pyo_obj.getNormValue()
         if not self.HIJACKED:
@@ -2064,8 +2105,11 @@ class ParamBox(BoxBase):
             self.ShowPatchWindow(evt)
         else:
             self.DRAGGED = False
-            self.ReleaseMouse()
+        #self.ReleaseMouse()
         self.CLICKED = False
+
+    def OnMouseCaptureLost(self, evt):
+        self.OnMouseUp(evt)
 
     def OnQuit(self, evt):
         """
@@ -2130,7 +2174,7 @@ class ParamBox(BoxBase):
         if x < 0.00000001:
             return u"-\u221EdB"
         else:
-            return "%.1fdB"%utils.ampTodB(x, 1)
+            return "%.1fdB" % PSUtils.ampTodB(x, 1)
 
     def _toggleMidiLearn(self):
         if self.MIDI_LEARN:
@@ -2228,33 +2272,33 @@ class StatusBarPanel(wx.Panel):
         self._upv_last_val = -1 # last poly val
 
         # bouton d'enregistrement et txtCtrl
-        self.rec_btn = buttons.RecButton(self, (self.rec_x, 6))
-        self.rec_btn.disable()
-
-        self.recTxtCtrl = controls.PSRecordTextCtrl(self, (self.rec_x + 32, 12), "No tracks")
+        self.recTxtCtrl = PSControls.PSRecordTextCtrl(self, (self.rec_x + 32, 12 - PSConfig.Y_OFFSET), "No tracks")
         x = self.recTxtCtrl.GetSize()[0] + self.recTxtCtrl.GetPosition()[0]
+        self.open_rec_btn = PSButtons.OpenRecButton(self, (x, 12 - PSConfig.Y_OFFSET))
 
-        self.open_rec_btn = buttons.OpenRecButton(self, (x, 12))
+        self.rec_btn = PSButtons.RecButton(self, (self.rec_x, 6 - PSConfig.Y_OFFSET))
+        self.rec_btn.disable()
 
         # fenetre des pistes enregistrees
         self.tracks_window = RecordedTracksWindow(self, self.GetParent()._server_, self.GetParent().script_namespace)
 
         # master volume slider
-        self.vol_slider = controls.VolumeSlider(self, (self.mv_x + 100, 21), 150)
+        self.vol_slider = PSControls.VolumeSlider(self, (self.mv_x + 100, 21 - PSConfig.Y_OFFSET), 150)
         self._changeMasterVol(None)
 
         # vu meter object
-        self.vu_meter = controls.VuMeter(self, (self.vm_x, 13), numChnls)
+        self.vu_meter = PSControls.VuMeter(self, (self.vm_x, 13 - PSConfig.Y_OFFSET), numChnls)
         self.setVuMeterPosition(numChnls)
         # clip light object
         x = parent.GetSize()[0]-23
-        self.clip_light = controls.ClipLight(self, (x, 17), .4)
+        self.clip_light = PSControls.ClipLight(self, (x, 17 - PSConfig.Y_OFFSET), .4)
 
-        self._font_11 = wx.Font(11, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        self._font_13 = wx.Font(13, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
-        self._font_17 = wx.Font(17, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self._font_11 = wx.Font(**PSConfig.FONTS['light']['small'])
+        self._font_13 = wx.Font(**PSConfig.FONTS['light']['med'])
+        self._font_17 = wx.Font(**PSConfig.FONTS['light']['title2'])
 
         # CPU, RAM & poly usage infos
+        self._proc_name = 'python'
         self.totalMem = psutil.virtual_memory()[0]
         self.python_id = self.getPythonID()
         self.python_proc = psutil.Process(self.python_id)
@@ -2265,24 +2309,26 @@ class StatusBarPanel(wx.Panel):
         self._cpu_history_data = [0] * self._proc_history_max  # will keep track of cpu usage history
         self._mem_history_data = [0] * self._proc_history_max  # will keep track of memory usage history
 
-        self.voicesText = wx.StaticText(self, -1, "", (15, 30))
+        self.voicesText = wx.StaticText(self, -1, "", (15, 30 - PSConfig.Y_OFFSET))
         self.voicesText.SetFont(self._font_11)
         self.voicesText.SetForegroundColour("#FFFFFF")
         self.updatePolyValue(0)
 
-        self.cpuText = wx.StaticText(self, -1, "", (15, 12))
+        self.cpuText = wx.StaticText(self, -1, "", (15, 12 - PSConfig.Y_OFFSET))
         self.cpuText.SetFont(self._font_11)
         self.cpuText.SetForegroundColour("#FFFFFF")
 
-        self.slashes = wx.StaticText(self, -1, "//", (93, 10))
+        self.slashes = wx.StaticText(self, -1, "//", (93, 10 - PSConfig.Y_OFFSET))
         self.slashes.SetFont(self._font_17)
         self.slashes.SetForegroundColour("#FFFFFF")
 
-        self.ramText = wx.StaticText(self, -1, "", (120, 12))
+        self.ramText = wx.StaticText(self, -1, "", (120, 12 - PSConfig.Y_OFFSET))
         self.ramText.SetFont(self._font_11)
         self.ramText.SetForegroundColour("#FFFFFF")
         self.updateUsage(-1)
 
+        # empty bitmap to pass to the BufferedPaintDC
+        self._buffer = wx.EmptyBitmap(self.GetSize()[0], self.GetSize()[1])
         # bitmap
         self.background = imgs.status_bar_background.GetBitmap()
 
@@ -2302,9 +2348,9 @@ class StatusBarPanel(wx.Panel):
         self.Bind(wx.EVT_TIMER, self.updateUsage, self._cpu_timer)
         self.Bind(wx.EVT_TIMER, self.updateRecTime, self._rec_timer)
         self.Bind(wx.EVT_TIMER, self._automaticRecStop, self._rec_autostop_timer)
-        self.Bind(buttons.EVT_BTN_REC, self._toggleRecording)
-        self.Bind(buttons.EVT_BTN_OPEN, self._showRecordedTracks)
-        self.vol_slider.Bind(controls.EVT_VOL_CHANGED, self._changeMasterVol)
+        self.Bind(PSButtons.EVT_BTN_REC, self._toggleRecording)
+        self.Bind(PSButtons.EVT_BTN_OPEN, self._showRecordedTracks)
+        self.vol_slider.Bind(PSControls.EVT_VOL_CHANGED, self._changeMasterVol)
 
     def _changeMasterVol(self, evt):
         self.GetParent()._server_.amp = self.vol_slider.getValue()
@@ -2320,7 +2366,7 @@ class StatusBarPanel(wx.Panel):
                 self.recTxtCtrl.SetText("Track %d" % id)
                 self.recTxtCtrl.SetTime("00:00")
                 self._rec_timer.Start(1000)
-                self._rec_autostop_timer.Start(config.REC_MAX_TIME*1000)
+                self._rec_autostop_timer.Start(PSConfig.REC_MAX_TIME * 1000)
                 self.recTxtCtrl.SetRecState(evt.GetState())
             else:
                 self.rec_btn._setState(False)
@@ -2344,15 +2390,19 @@ class StatusBarPanel(wx.Panel):
             self.tracks_window.HideWindow()
 
     def OnPaint(self, evt):
-        dc = wx.PaintDC(self)
-        dc.Clear()
+        dc = wx.BufferedPaintDC(self, self._buffer)
 
         dc.DrawBitmap(self.background, 0, 0)
 
         dc.SetTextForeground("#FFFFFF")
         dc.SetFont(self._font_13)
-        dc.DrawText("Master volume", self.mv_x, 21)
-        dc.DrawText("Output level", self.vm_x - 80, 21)
+        dc.DrawText("Master volume", self.mv_x, 21 - PSConfig.Y_OFFSET * 2)
+        dc.DrawText("Output level", self.vm_x - 80, 21 - PSConfig.Y_OFFSET * 2)
+
+    def GetRegion(self, x, y, w, h):
+        img = self._buffer.ConvertToImage()
+        region = img.GetSubImage(wx.Rect(x, y, w, h))
+        return wx.BitmapFromImage(region)
 
     def getPythonID(self):
         create_time = None
@@ -2364,7 +2414,7 @@ class StatusBarPanel(wx.Panel):
             except psutil.NoSuchProcess:
                 pass
             else:
-                if pinfo['name'] == 'Pyo Synth':
+                if pinfo['name'] == self._proc_name:
                     num += 1
                     if create_time is None:
                         create_time = proc.create_time()
@@ -2380,13 +2430,13 @@ class StatusBarPanel(wx.Panel):
 
     def setVuMeterPosition(self, chnls):
         if chnls == 1:
-            self.vu_meter.SetPosition((self.vm_x, 19))
+            self.vu_meter.SetPosition((self.vm_x, 19 - PSConfig.Y_OFFSET))
         elif chnls == 2:
-            self.vu_meter.SetPosition((self.vm_x, 13))
+            self.vu_meter.SetPosition((self.vm_x, 13 - PSConfig.Y_OFFSET))
         elif chnls == 3:
-            self.vu_meter.SetPosition((self.vm_x, 8))
+            self.vu_meter.SetPosition((self.vm_x, 8 - PSConfig.Y_OFFSET))
         elif chnls == 4:
-            self.vu_meter.SetPosition((self.vm_x, 2))
+            self.vu_meter.SetPosition((self.vm_x, 2 - PSConfig.Y_OFFSET))
 
     def updateUsage(self, evt):
         try:
@@ -2436,7 +2486,7 @@ class StatusBarPanel(wx.Panel):
         if self._upv_last_val != value:
             if value == 0:
                 wx.CallAfter(self._doSafeUpdatePolyValue, value, False)
-            elif value == config.PYOSYNTH_PREF['poly']:
+            elif value == PSConfig.PYOSYNTH_PREF['poly']:
                 wx.CallAfter(self._doSafeUpdatePolyValue, value, True)
             elif self._upv_count%7 == 0:
                 wx.CallAfter(self._doSafeUpdatePolyValue, value, False)
@@ -2452,7 +2502,7 @@ class StatusBarPanel(wx.Panel):
             self.voicesText.SetForegroundColour("#FF0000")
         else:
             self.voicesText.SetForegroundColour("#FFFFFF")
-        self.voicesText.SetLabel("Polyphony Voices : %d/%d" % (value, config.PYOSYNTH_PREF['poly']))
+        self.voicesText.SetLabel("Polyphony Voices : %d/%d" % (value, PSConfig.PYOSYNTH_PREF['poly']))
 
 
 class MenuPanel(wx.Panel):
@@ -2468,52 +2518,52 @@ class MenuPanel(wx.Panel):
         self.script_txt_x = self.btn_save_x + 93
         self.adsr_section = self.script_txt_x + 448
 
-        self.font = wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        self.font = wx.Font(**PSConfig.FONTS['light']['norm'])
 
         ##Declaration des boutons et labels de gauche a droite
         # boutons open et save
-        self.btn_open = buttons.OpenButton(self, (self.btn_open_x, self.top_margin))
-        self.btn_save = buttons.SaveButton(self, (self.btn_save_x, self.top_margin))
+        self.btn_open = PSButtons.OpenButton(self, (self.btn_open_x, self.top_margin))
+        self.btn_save = PSButtons.SaveButton(self, (self.btn_save_x, self.top_margin))
 
         # label du nom du script
-        self.script_name = controls.PSScriptTextCtrl(self, (self.script_txt_x, 18), "No script selected")
+        self.script_name = PSControls.PSScriptTextCtrl(self, (self.script_txt_x, 18), "No script selected")
 
         # bouton run
         x = self.script_name.GetWidth() + self.script_name.GetPosition()[0]
-        self.btn_run = buttons.RunButton(self, (x, self.script_name.GetPosition()[1]))
+        self.btn_run = PSButtons.RunButton(self, (x, self.script_name.GetPosition()[1]))
         self.btn_run.disable()
 
-        self.server_setup_btn = buttons.ServerSetupButton(self, (self.GetSize()[0] - 17, 0))
+        self.server_setup_btn = PSButtons.ServerSetupButton(self, (self.GetSize()[0] - 17, 0))
 
         # statut du script
         x += self.btn_run.GetSize()[0] + 10
-        self.script_status = wx.StaticText(self, -1, "|  Stopped", (x, self.top_margin + 8))
+        self.script_status = wx.StaticText(self, -1, "|  Stopped", (x, self.top_margin + 8 - PSConfig.Y_OFFSET))
         self.script_status.SetFont(self.font)
         self.script_status.SetForegroundColour("#FFFFFF")
 
         # metronome
         x += self.script_status.GetSize()[0] + 35
-        self.metro = controls.PSClick(self, (x, self.top_margin - 2), 120, self.GetParent()._server_.getNchnls())
+        self.metro = PSControls.PSClick(self, (x, self.top_margin - 2), 120, self.GetParent()._server_.getNchnls())
 
         # adsr envelope knobs
-        self._attackKnob = controls.PSSmallRotaryKnob(self, pos=(self.adsr_section, 10), min=0, max=1, text='A',
-                                                      ratio=100, shift_mul=100, valprec=3)
+        self._attackKnob = PSControls.PSSmallRotaryKnob(self, pos=(self.adsr_section, 10), min=0, max=1, text='A',
+                                                        ratio=100, shift_mul=100, valprec=3)
 
         x = self._attackKnob.GetPosition()[0] + self._attackKnob.GetSize()[0] + 10
-        self._decayKnob = controls.PSSmallRotaryKnob(self, (x, 10), 0, 1, 'D', 80, 50, 2)
+        self._decayKnob = PSControls.PSSmallRotaryKnob(self, (x, 10), 0, 1, 'D', 80, 50, 2)
 
         x = self._decayKnob.GetPosition()[0] + self._decayKnob.GetSize()[0] + 10
-        self._sustainKnob = controls.PSSmallRotaryKnob(self, (x, 10), 0, 1, 'S', 80, 50, 2)
+        self._sustainKnob = PSControls.PSSmallRotaryKnob(self, (x, 10), 0, 1, 'S', 80, 50, 2)
 
         x = self._sustainKnob.GetPosition()[0] + self._sustainKnob.GetSize()[0] + 10
-        self._releaseKnob = controls.PSSmallRotaryKnob(self, (x, 10), 0, 4, 'R', 50, 50, 2)
+        self._releaseKnob = PSControls.PSSmallRotaryKnob(self, (x, 10), 0, 4, 'R', 50, 50, 2)
 
         # txt ctrl interface
-        self.snd_card_ctrl = controls.PSTextCtrl(self, (0, 0), "Dummy text")
+        self.snd_card_ctrl = PSControls.PSTextCtrl(self, (0, 0), "Dummy text")
         posx = self.GetSize()[0] - self.snd_card_ctrl.GetWidth() - self.server_setup_btn.GetSize()[0] - 15
         self.snd_card_ctrl.SetPosition((posx, 12))
 
-        fontSmall = wx.Font(10, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_LIGHT, faceName="Helvetica")
+        fontSmall = wx.Font(**PSConfig.FONTS['light']['xsmall'])
 
         # quick info
         self.quick_info = wx.StaticText(self, -1, "sr : 44.1 | bfs : 256 | 2 chnls", (posx - 22, 40))
@@ -2521,13 +2571,15 @@ class MenuPanel(wx.Panel):
         self.quick_info.SetFont(fontSmall)
 
         # bitmaps
+        # empty bitmap to pass to the BufferedPaintDC
+        self._buffer = wx.EmptyBitmap(self.GetSize()[0], self.GetSize()[1])
         self.back = imgs.menu_background.GetBitmap()
         self.logo = imgs.logo.GetBitmap()
         self.separator = imgs.separator.GetBitmap()
 
         # Binding events
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.server_setup_btn.Bind(buttons.EVT_BTN_CLICKED, self.ShowServerSetup)
+        self.server_setup_btn.Bind(PSButtons.EVT_BTN_CLICKED, self.ShowServerSetup)
 
     def __getitem__(self, i):
         if i == 'click':
@@ -2541,14 +2593,19 @@ class MenuPanel(wx.Panel):
         self.metro.reinit(self.GetParent()._server_.getNchnls())
 
     def OnPaint(self, evt):
-        dc = wx.PaintDC(self)
+        dc = wx.BufferedPaintDC(self, self._buffer)
         dc.Clear()
         dc.DrawBitmap(self.back, 0, 0)
         dc.DrawBitmap(self.logo, 0, 0)
         dc.DrawBitmap(self.separator, 133, 7)
 
+    def GetRegion(self, x, y, w, h):
+        img = self._buffer.ConvertToImage()
+        region = img.GetSubImage(wx.Rect(x, y, w, h))
+        return wx.BitmapFromImage(region)
+
     def _setScriptName(self, name):
-        self.script_name.SetText(utils.shortenText(name, 20))
+        self.script_name.SetText(PSUtils.shortenText(name, 20))
         self.btn_run.enable()
         wx.CallLater(180, self._moveScriptNameCtrl)
 
@@ -2611,7 +2668,7 @@ class MenuPanel(wx.Panel):
 class ExportWindow(wx.Dialog):
     def __init__(self, parent, prefs=None):
         wx.Dialog.__init__(self, parent, -1, "Export Samples", size=(410, 370))
-        self.path = config.HOME_PATH
+        self.path = PSConfig.HOME_PATH
         self.bg = imgs.export_win_bg.GetBitmap()
 
         # Y positions
@@ -2623,21 +2680,21 @@ class ExportWindow(wx.Dialog):
         # Output folder
         label = wx.StaticText(self, -1, "Output Folder", (margin_x, outputFolder))
         label.SetForegroundColour("#d8ff00")
-        btn = buttons.PSRectangleButton(self, (margin_x + 5, outputFolder + 23), (65, 23), "Choose...")
-        self.Bind(buttons.EVT_BTN_CLICKED, self._dirDialog, btn)
-        self.pathText = wx.StaticText(self, -1, utils.shortenText(self.path, 40), (100, outputFolder + 25))
+        btn = PSButtons.PSRectangleButton(self, (margin_x + 5, outputFolder + 23), (65, 23), "Choose...")
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self._dirDialog, btn)
+        self.pathText = wx.StaticText(self, -1, PSUtils.shortenText(self.path, 40), (100, outputFolder + 25))
         self.pathText.SetForegroundColour("#f0f4d7")
 
         # Midi notes
         label = wx.StaticText(self, -1, "Export Range (Midi Notes)", (margin_x, exportRange))
         label.SetForegroundColour("#d8ff00")
         # min
-        self.minText = wx.StaticText(self, -1, "From : %s(%d)" % (config.MIDI_NOTES_NAMES[21], 21),
+        self.minText = wx.StaticText(self, -1, "From : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[21], 21),
                                      (margin_x + 5, exportRange + 25))
         self.minText.SetForegroundColour("#f0f4d7")
         self.midiMin = wx.Slider(self, -1, 21, 0, 127, pos=(margin_x + 5, exportRange + 50), size=(127, -1))
         # max
-        self.maxText = wx.StaticText(self, -1, "To : %s(%d)" % (config.MIDI_NOTES_NAMES[106], 106),
+        self.maxText = wx.StaticText(self, -1, "To : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[106], 106),
                                      (margin_x + 160, exportRange + 25))
         self.maxText.SetForegroundColour("#f0f4d7")
         self.midiMax = wx.Slider(self, -1, 106, 0, 127, pos=(margin_x + 160, exportRange + 50), size=(127, -1))
@@ -2686,10 +2743,10 @@ class ExportWindow(wx.Dialog):
         secs = wx.StaticText(self, -1, "secs.", (margin_x + 100, fileSpecs + 59))
         secs.SetForegroundColour("#f0f4d7")
 
-        btn = buttons.PSRectangleButton(self, (120, 310), (65, 23), "OK", id=wx.ID_OK)
-        self.Bind(buttons.EVT_BTN_CLICKED, self._endModal, btn)
-        btn = buttons.PSRectangleButton(self, (193, 310), (65, 23), "CANCEL", id=wx.ID_CANCEL)
-        self.Bind(buttons.EVT_BTN_CLICKED, self._endModal, btn)
+        btn = PSButtons.PSRectangleButton(self, (120, 310), (65, 23), "OK", id=wx.ID_OK)
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self._endModal, btn)
+        btn = PSButtons.PSRectangleButton(self, (193, 310), (65, 23), "CANCEL", id=wx.ID_CANCEL)
+        self.Bind(PSButtons.EVT_BTN_CLICKED, self._endModal, btn)
 
         if prefs is not None:
             self._updateFields(prefs)
@@ -2702,7 +2759,7 @@ class ExportWindow(wx.Dialog):
         w, h = self.GetSize()
         dc = wx.PaintDC(self)
         dc.DrawBitmap(self.bg, 0, 0)
-        color = utils.getTransparentColour(56, "#4f4f4f")[0]
+        color = PSUtils.getTransparentColour(56, "#4f4f4f")[0]
         dc.SetBrush(wx.Brush(color))
         dc.SetPen(wx.Pen(color, 1))
         dc.DrawRectangle(7, 7, w - 14, 63)
@@ -2711,12 +2768,12 @@ class ExportWindow(wx.Dialog):
 
     def OnChangeMin(self, evt):
         i = self.midiMin.GetValue()
-        text = "From : %s(%d)" % (config.MIDI_NOTES_NAMES[i], i)
+        text = "From : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[i], i)
         self.minText.SetLabel(text)
 
     def OnChangeMax(self, evt):
         i = self.midiMax.GetValue()
-        text = "To : %s(%d)" % (config.MIDI_NOTES_NAMES[i], i)
+        text = "To : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[i], i)
         self.maxText.SetLabel(text)
 
     def _endModal(self, evt):
@@ -2726,7 +2783,7 @@ class ExportWindow(wx.Dialog):
         dlg = wx.DirDialog(self, "Choose a directory", defaultPath=self.path)
         if dlg.ShowModal() == wx.ID_OK:
             self.path = dlg.GetPath()
-            self.pathText.SetLabel(utils.shortenText(self.path, 44))
+            self.pathText.SetLabel(PSUtils.shortenText(self.path, 44))
         dlg.Destroy()
 
     def _updateFields(self, prefs):
@@ -2736,13 +2793,13 @@ class ExportWindow(wx.Dialog):
         # Display min midi note
         val = prefs['midimin']
         self.midiMin.SetValue(val)
-        text = "From : %s(%d)" % (config.MIDI_NOTES_NAMES[val], val)
+        text = "From : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[val], val)
         self.minText.SetLabel(text)
 
         # Display max midi note
         val = prefs['midimax']
         self.midiMax.SetValue(val)
-        text = "To : %s(%d)" % (config.MIDI_NOTES_NAMES[val], val)
+        text = "To : %s(%d)" % (PSConfig.MIDI_NOTES_NAMES[val], val)
         self.maxText.SetLabel(text)
 
         self.velSteps.SetValue(str(prefs['velsteps']))
@@ -2839,16 +2896,7 @@ class PSTerminal(wx.Frame):
         # stdin text control
         self._stdin_ctrl = wx.TextCtrl(self._panel, -1, "", (-2, y-42), (x+4, -1), style=wx.TE_PROCESS_ENTER)
 
-        if wx.Platform in ('__WXMAC__', '__WXGTK__'):
-            font = wx.Font(pointSize=11, family=wx.FONTFAMILY_MODERN, style=wx.FONTSTYLE_NORMAL,
-                           weight=wx.FONTWEIGHT_NORMAL, face='Monaco')
-        elif wx.Platform == '__WXMSW__':
-            font = wx.Font(pointSize=11, family=wx.FONTFAMILY_MODERN, style=wx.FONTSTYLE_NORMAL,
-                           weight=wx.FONTWEIGHT_NORMAL, face='Consolas')
-        else:
-            font = wx.Font(pointSize=11, family=wx.FONTFAMILY_MODERN, style=wx.FONTSTYLE_NORMAL,
-                           weight=wx.FONTWEIGHT_NORMAL)
-        self._stdout_ctrl.SetFont(font)
+        self._stdout_ctrl.SetFont(wx.Font(**PSConfig.FONTS['terminal']))
 
         self._history = []
         self._histo_ind = -1
@@ -2992,7 +3040,7 @@ class VirtualKeyboard:
 
         self.octave = 5
         self.min_octave = 0
-        self.max_octave = 11 - config.mapping_styles[style][0]
+        self.max_octave = 11 - PSConfig.mapping_styles[style][0]
         self.amp = .7  # value of the amplitude
         self.sustain = False
         self.setMonoMode(mono, mono_type)
@@ -3202,8 +3250,8 @@ class VirtualKeyboard:
     def buildMapping(self):
         dict = {}
         note = self.octave * 12
-        for i in range(1, len(config.mapping_styles[self.map_style])):
-            dict[config.mapping_styles[self.map_style][i]] = midiToHz(note)
+        for i in range(1, len(PSConfig.mapping_styles[self.map_style])):
+            dict[PSConfig.mapping_styles[self.map_style][i]] = midiToHz(note)
             note += 1
         return dict
 
@@ -3229,5 +3277,5 @@ class VirtualKeyboard:
 
     def setMappingStyle(self, style):
         self.map_style = style
-        self.max_octave = 11 - config.mapping_styles[self.map_style][0]
+        self.max_octave = 11 - PSConfig.mapping_styles[self.map_style][0]
         self.mapping = self.buildMapping()

@@ -1,0 +1,1087 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="8c9f8ef2-77ef-4d08-9f2c-62cae303d999" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/controls.py" afterPath="$PROJECT_DIR$/resources/controls.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/buttons.py" afterPath="$PROJECT_DIR$/resources/buttons.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/interface.py" afterPath="$PROJECT_DIR$/resources/interface.py" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="install.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/install.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="15">
+              <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+              <folding>
+                <element signature="e#831#840#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Pyo Synth.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="330">
+              <caret line="28" column="23" lean-forward="true" selection-start-line="28" selection-start-column="23" selection-end-line="28" selection-end-column="23" />
+              <folding>
+                <element signature="e#813#822#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PSControls.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="285">
+              <caret line="21" column="35" lean-forward="false" selection-start-line="21" selection-start-column="30" selection-end-line="21" selection-end-column="35" />
+              <folding>
+                <element signature="e#9481#11639#0" expanded="false" />
+                <element signature="e#12473#14811#0" expanded="false" />
+                <element signature="e#14849#18856#0" expanded="false" />
+                <element signature="e#18887#22278#0" expanded="false" />
+                <element signature="e#22311#23565#0" expanded="false" />
+                <element signature="e#23610#24619#0" expanded="false" />
+                <element signature="e#25197#35114#0" expanded="false" />
+                <element signature="e#35147#38252#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__main__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="8430">
+              <caret line="793" column="25" lean-forward="true" selection-start-line="793" selection-start-column="25" selection-end-line="793" selection-end-column="25" />
+              <folding>
+                <element signature="e#790#815#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PSInterface.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="6060">
+              <caret line="888" column="86" lean-forward="true" selection-start-line="888" selection-start-column="86" selection-end-line="888" selection-end-column="86" />
+              <folding>
+                <element signature="e#831#842#0" expanded="true" />
+                <element signature="e#1374#2588#0" expanded="false" />
+                <element signature="e#2633#8995#0" expanded="false" />
+                <element signature="e#9049#12120#0" expanded="false" />
+                <element signature="e#12165#15704#0" expanded="false" />
+                <element signature="e#38473#45452#0" expanded="false" />
+                <element signature="e#45490#50399#0" expanded="false" />
+                <element signature="e#50446#56790#0" expanded="false" />
+                <element signature="e#56824#63371#0" expanded="false" />
+                <element signature="e#63403#66240#0" expanded="false" />
+                <element signature="e#66272#83922#0" expanded="false" />
+                <element signature="e#83961#94133#0" expanded="false" />
+                <element signature="e#94167#100642#0" expanded="false" />
+                <element signature="e#100680#107764#0" expanded="false" />
+                <element signature="e#107806#109719#0" expanded="false" />
+                <element signature="e#109754#113726#0" expanded="false" />
+                <element signature="e#113763#115149#0" expanded="false" />
+                <element signature="e#115179#124062#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>package</find>
+      <find>wx.Font</find>
+      <find>self.font</find>
+      <find>wx.Font(</find>
+      <find>pow</find>
+      <find>log10</find>
+      <find>controls</find>
+      <find>utils</find>
+      <find>toggle</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>self._font</replace>
+      <replace>PSControls</replace>
+      <replace>PSUtils</replace>
+    </replaceStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/install.py" />
+        <option value="$PROJECT_DIR$/resources/buttons.py" />
+        <option value="$PROJECT_DIR$/resources/config.py" />
+        <option value="$PROJECT_DIR$/resources/audio.py" />
+        <option value="$PROJECT_DIR$/resources/controls.py" />
+        <option value="$PROJECT_DIR$/resources/utils.py" />
+        <option value="$PROJECT_DIR$/resources/interface.py" />
+        <option value="$PROJECT_DIR$/resources/PSInterface.py" />
+        <option value="$PROJECT_DIR$/resources/__main__.py" />
+        <option value="$PROJECT_DIR$/resources/pyoParamTree.py" />
+        <option value="$PROJECT_DIR$/Pyo Synth.py" />
+        <option value="$PROJECT_DIR$/resources/extra/NoteinSustain.py" />
+        <option value="$PROJECT_DIR$/resources/extra/MonoNotein.py" />
+        <option value="$PROJECT_DIR$/resources/extra/NuttallTable.py" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="-1" />
+    <option name="y" value="27" />
+    <option name="width" value="1442" />
+    <option name="height" value="874" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Pyo Synth 0.1.2b" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Pyo Synth 0.1.2b" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Pyo Synth 0.1.2b" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="Pyo Synth 0.1.2b" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="resources" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+      <pane id="Scratches" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///home/alex/Pyo Synth - git/PyoSynth/Pyo Synth 0.1.2b/resources/buttons.py" />
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Attests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Doctests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Nosetests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Unittests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="py.test">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="Pyo Synth 0.1.2b" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="testToRun" value="" />
+      <option name="keywords" value="" />
+      <option name="params" value="" />
+      <option name="USE_PARAM" value="false" />
+      <option name="USE_KEYWORD" value="false" />
+      <method />
+    </configuration>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8c9f8ef2-77ef-4d08-9f2c-62cae303d999" name="Default" comment="" />
+      <created>1490232824038</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1490232824038</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="-1" y="27" width="1442" height="874" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24236111" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="true" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32936507" sideWeight="0.50277776" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32936507" sideWeight="0.49722221" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31084657" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <option name="time" value="3" />
+    </breakpoint-manager>
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#813#822#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3285">
+          <caret line="219" column="17" lean-forward="false" selection-start-line="219" selection-start-column="17" selection-end-line="219" selection-end-column="17" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#840#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7305">
+          <caret line="487" column="0" lean-forward="true" selection-start-line="487" selection-start-column="0" selection-end-line="487" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#16613#38437#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8115">
+          <caret line="541" column="29" lean-forward="true" selection-start-line="541" selection-start-column="29" selection-end-line="541" selection-end-column="29" />
+          <folding>
+            <element signature="e#790#815#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3300">
+          <caret line="220" column="33" lean-forward="false" selection-start-line="220" selection-start-column="33" selection-end-line="220" selection-end-column="33" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#5273#7727#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="570">
+          <caret line="38" column="16" lean-forward="false" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#813#822#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5805">
+          <caret line="387" column="8" lean-forward="false" selection-start-line="387" selection-start-column="8" selection-end-line="387" selection-end-column="8" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#840#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#16613#38437#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7860">
+          <caret line="524" column="97" lean-forward="false" selection-start-line="524" selection-start-column="97" selection-end-line="524" selection-end-column="97" />
+          <folding>
+            <element signature="e#790#815#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2505">
+          <caret line="169" column="75" lean-forward="false" selection-start-line="169" selection-start-column="75" selection-end-line="169" selection-end-column="75" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#5273#7727#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="38" column="16" lean-forward="false" selection-start-line="38" selection-start-column="16" selection-end-line="38" selection-end-column="16" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#813#822#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5805">
+          <caret line="387" column="8" lean-forward="false" selection-start-line="387" selection-start-column="8" selection-end-line="387" selection-end-column="8" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#840#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#16613#38437#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7710">
+          <caret line="524" column="97" lean-forward="false" selection-start-line="524" selection-start-column="97" selection-end-line="524" selection-end-column="97" />
+          <folding>
+            <element signature="e#790#815#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2505">
+          <caret line="169" column="75" lean-forward="false" selection-start-line="169" selection-start-column="75" selection-end-line="169" selection-end-column="75" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#5273#7727#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1485">
+          <caret line="102" column="22" lean-forward="false" selection-start-line="102" selection-start-column="22" selection-end-line="102" selection-end-column="22" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#16613#38437#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="10080">
+          <caret line="672" column="0" lean-forward="true" selection-start-line="672" selection-start-column="0" selection-end-line="672" selection-end-column="0" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3615">
+          <caret line="241" column="78" lean-forward="false" selection-start-line="241" selection-start-column="78" selection-end-line="241" selection-end-column="78" />
+          <folding>
+            <element signature="e#790#815#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2745">
+          <caret line="265" column="0" lean-forward="false" selection-start-line="265" selection-start-column="0" selection-end-line="265" selection-end-column="0" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#5273#7727#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="525">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1485">
+          <caret line="102" column="22" lean-forward="false" selection-start-line="102" selection-start-column="22" selection-end-line="102" selection-end-column="22" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="38400">
+          <caret line="2560" column="41" lean-forward="false" selection-start-line="2560" selection-start-column="41" selection-end-line="2560" selection-end-column="41" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#16613#38437#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2805">
+          <caret line="187" column="0" lean-forward="true" selection-start-line="187" selection-start-column="0" selection-end-line="187" selection-end-column="0" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#5273#7727#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="585">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="248">
+          <caret line="31" column="11" lean-forward="false" selection-start-line="31" selection-start-column="11" selection-end-line="31" selection-end-column="11" />
+          <folding>
+            <element signature="e#831#840#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSAudio.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="23" column="12" lean-forward="false" selection-start-line="23" selection-start-column="12" selection-end-line="23" selection-end-column="12" />
+          <folding>
+            <element signature="e#790#805#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1892">
+          <caret line="197" column="8" lean-forward="false" selection-start-line="197" selection-start-column="8" selection-end-line="197" selection-end-column="8" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+            <element signature="e#1882#3963#0" expanded="false" />
+            <element signature="e#7764#9048#0" expanded="false" />
+            <element signature="e#9097#10489#0" expanded="false" />
+            <element signature="e#10538#12102#0" expanded="false" />
+            <element signature="e#12151#13293#0" expanded="false" />
+            <element signature="e#14135#15598#0" expanded="false" />
+            <element signature="e#15649#17898#0" expanded="false" />
+            <element signature="e#17947#18983#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSConfig.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-2194">
+          <caret line="41" column="23" lean-forward="false" selection-start-line="41" selection-start-column="23" selection-end-line="41" selection-end-column="23" />
+          <folding>
+            <element signature="e#790#799#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/install.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="39" column="105" lean-forward="false" selection-start-line="39" selection-start-column="105" selection-end-line="39" selection-end-column="105" />
+          <folding>
+            <element signature="e#831#840#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="21" column="35" lean-forward="false" selection-start-line="21" selection-start-column="30" selection-end-line="21" selection-end-column="35" />
+          <folding>
+            <element signature="e#9481#11639#0" expanded="false" />
+            <element signature="e#12473#14811#0" expanded="false" />
+            <element signature="e#14849#18856#0" expanded="false" />
+            <element signature="e#18887#22278#0" expanded="false" />
+            <element signature="e#22311#23565#0" expanded="false" />
+            <element signature="e#23610#24619#0" expanded="false" />
+            <element signature="e#25197#35114#0" expanded="false" />
+            <element signature="e#35147#38252#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/pyoParamTree.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="384">
+          <caret line="28" column="66" lean-forward="true" selection-start-line="28" selection-start-column="66" selection-end-line="28" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/extra/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#33#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/extra/NoteinSustain.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="1" lean-forward="false" selection-start-line="3" selection-start-column="1" selection-end-line="3" selection-end-column="1" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/extra/MonoNotein.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="2" column="17" lean-forward="true" selection-start-line="2" selection-start-column="17" selection-end-line="2" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/extra/NuttallTable.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="5" column="21" lean-forward="false" selection-start-line="5" selection-start-column="21" selection-end-line="5" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="330">
+          <caret line="28" column="23" lean-forward="true" selection-start-line="28" selection-start-column="23" selection-end-line="28" selection-end-column="23" />
+          <folding>
+            <element signature="e#813#822#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="8430">
+          <caret line="793" column="25" lean-forward="true" selection-start-line="793" selection-start-column="25" selection-end-line="793" selection-end-column="25" />
+          <folding>
+            <element signature="e#790#815#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="6060">
+          <caret line="888" column="86" lean-forward="true" selection-start-line="888" selection-start-column="86" selection-end-line="888" selection-end-column="86" />
+          <folding>
+            <element signature="e#831#842#0" expanded="true" />
+            <element signature="e#1374#2588#0" expanded="false" />
+            <element signature="e#2633#8995#0" expanded="false" />
+            <element signature="e#9049#12120#0" expanded="false" />
+            <element signature="e#12165#15704#0" expanded="false" />
+            <element signature="e#38473#45452#0" expanded="false" />
+            <element signature="e#45490#50399#0" expanded="false" />
+            <element signature="e#50446#56790#0" expanded="false" />
+            <element signature="e#56824#63371#0" expanded="false" />
+            <element signature="e#63403#66240#0" expanded="false" />
+            <element signature="e#66272#83922#0" expanded="false" />
+            <element signature="e#83961#94133#0" expanded="false" />
+            <element signature="e#94167#100642#0" expanded="false" />
+            <element signature="e#100680#107764#0" expanded="false" />
+            <element signature="e#107806#109719#0" expanded="false" />
+            <element signature="e#109754#113726#0" expanded="false" />
+            <element signature="e#113763#115149#0" expanded="false" />
+            <element signature="e#115179#124062#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>

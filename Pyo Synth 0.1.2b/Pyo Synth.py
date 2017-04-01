@@ -22,8 +22,13 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 
 import wx
 import sys
-from pyo import *
 import resources.extra as extra
+
+if sys.platform == 'linux2':
+    print 'pyo64'
+    from pyo64 import *
+else:
+    from pyo import *
 
 
 from resources import __main__
