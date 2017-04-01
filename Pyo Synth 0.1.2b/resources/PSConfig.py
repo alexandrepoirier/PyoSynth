@@ -38,14 +38,17 @@ NB_ELEM_ROW = 8
 if PLATFORM == 'linux2':
     Y_OFFSET = 3
     X_OFFSET = 1
+    BANNER_OFFSET = 43
     USE_TRANSPARENCY = False
 elif PLATFORM == 'win32':
     Y_OFFSET = 0
     X_OFFSET = 0
+    BANNER_OFFSET = 0
     USE_TRANSPARENCY = False
 elif PLATFORM == 'darwin':
     Y_OFFSET = 0
     X_OFFSET = 0
+    BANNER_OFFSET = 0
     USE_TRANSPARENCY = True
 
 REFRESH_RATE = 1./13

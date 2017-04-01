@@ -25,7 +25,6 @@ import sys
 import resources.extra as extra
 
 if sys.platform == 'linux2':
-    print 'pyo64'
     from pyo64 import *
 else:
     from pyo import *

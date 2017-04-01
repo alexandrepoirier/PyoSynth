@@ -1765,7 +1765,7 @@ class PyoSynth(wx.Frame):
 
     def _nextPreset(self):
         if len(self.values_dict) > 0:
-            self.enableChildren(False)
+            self.enableBoxes(False)
             self.i += 1
             while True:
                 if self.i in self.values_dict:
@@ -1779,7 +1779,7 @@ class PyoSynth(wx.Frame):
             self.MATCHING_VALUES = False
             PSUtils.printMessage("Match Mode completed", 1)
             self.reset_boxes_item.Enable(True)
-            self.enableChildren(True)
+            self.enableBoxes(True)
             self.warningWindow.SetText("Done!")
             self.warningWindow.destroy()
             del self.i
@@ -1787,17 +1787,16 @@ class PyoSynth(wx.Frame):
 
     def quitMatchMode(self):
         self.MATCHING_VALUES = False
-        self.enableChildren(True)
+        self.enableBoxes(True)
         self.reset_boxes_item.Enable(True)
         self.boxes_list[self.i].stopMatchMode()
         self._destroyWarningWindow()
         del self.i
         del self.values_dict
 
-    def enableChildren(self, enable):
-        list = self.GetChildren()
-        for child in list:
-            child.Enable(enable)
+    def enableBoxes(self, enable):
+        for box in self.boxes_list:
+            box.Enable(enable)
             
     def _makeConnection(self, ctl, attr):
         try:

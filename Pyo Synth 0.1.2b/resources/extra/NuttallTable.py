@@ -1,6 +1,5 @@
 import sys
 if sys.platform == 'linux2':
-    print 'pyo64'
     from pyo64 import *
 else:
     from pyo import *

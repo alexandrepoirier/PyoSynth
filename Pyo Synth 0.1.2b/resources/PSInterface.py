@@ -102,7 +102,6 @@ class RecordedTrackElement(wx.Panel):
         else:
             self._size = RecordedTrackElement.size
         wx.Panel.__init__(self, parent, pos=pos, size=self._size)
-        self.SetTransparent(255)
 
         self._path = path
         self._text = "Track %d" % id
@@ -114,16 +113,26 @@ class RecordedTrackElement(wx.Panel):
         self._sndtable = None
         self._osc = None
 
-        if old:
-            self._select_clr = wx.Colour(32, 130, 150, 255)
-            self._norm_clr = wx.Colour(32, 130, 150, 20)
-            self._date_txt = self._getDateText()
-        else:
-            self._select_clr = wx.Colour(90, 90, 90, 255)
-            self._norm_clr = wx.Colour(90, 90, 90, 20)
-
         self._norm_font = wx.Font(**PSConfig.FONTS['light']['norm'])
         self._small_font = wx.Font(**PSConfig.FONTS['light']['xsmall'])
+
+        if PSConfig.USE_TRANSPARENCY:
+            self.SetTransparent(255)
+            if old:
+                self._select_clr = wx.Colour(32, 130, 150, 255)
+                self._norm_clr = wx.Colour(32, 130, 150, 20)
+                self._date_txt = self._getDateText()
+            else:
+                self._select_clr = wx.Colour(90, 90, 90, 255)
+                self._norm_clr = wx.Colour(90, 90, 90, 20)
+        else:
+            if old:
+                self._select_clr = wx.Colour(32, 130, 150)
+                self._norm_clr = wx.Colour(22, 88, 101)
+                self._date_txt = self._getDateText()
+            else:
+                self._select_clr = wx.Colour(90, 90, 90)
+                self._norm_clr = wx.Colour(60, 60, 60)
 
         # buttons
         self.play_btn = PSButtons.PlayTrackButton(self, (5, 20))
@@ -136,7 +145,11 @@ class RecordedTrackElement(wx.Panel):
         self._progression_time = 0.
 
         # binding events
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        if PSConfig.PLATFORM == 'linux2':
+            self.Bind(wx.EVT_PAINT, self.OnPaintLinux)
+        elif PSConfig.PLATFORM == 'darwin':
+            self.Bind(wx.EVT_PAINT, self.OnPaintMac)
+
         self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseIn)
         self.play_btn.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseIn)
@@ -151,15 +164,31 @@ class RecordedTrackElement(wx.Panel):
         self.Bind(PSButtons.EVT_BTN_CLICKED, self._saveTrack, self.save_btn)
         self.Bind(PSButtons.EVT_BTN_CLICKED, self._deleteTrack, self.delete_btn)
 
-    def OnPaint(self, evt):
-        w, h = self.GetSize()
-        dc = wx.PaintDC(self)
-
-        # draw background
+    def OnPaintLinux(self, evt):
         if self._hover or self._selected:
             colour = self._select_clr
         else:
             colour = self._norm_clr
+
+        self.play_btn.SetBackgroundColour(colour)
+        self.stop_btn.SetBackgroundColour(colour)
+        self.save_btn.SetBackgroundColour(colour)
+        self.delete_btn.SetBackgroundColour(colour)
+        self.progression_bar.SetBackgroundColour(colour)
+
+        self.OnPaintGeneric(colour)
+
+    def OnPaintMac(self, evt):
+        if self._hover or self._selected:
+            colour = self._select_clr
+        else:
+            colour = self._norm_clr
+
+        self.OnPaintGeneric(colour)
+
+    def OnPaintGeneric(self, colour):
+        w, h = self.GetSize()
+        dc = wx.PaintDC(self)
 
         dc.SetBrush(wx.Brush(colour))
         dc.SetPen(wx.Pen(colour, 1))
@@ -167,11 +196,11 @@ class RecordedTrackElement(wx.Panel):
 
         dc.SetFont(self._norm_font)
         dc.SetTextForeground("#FFFFFF")
-        dc.DrawText(self._text + " - " + self._durationText, 5, 6)
-        # draw date text at the bottom left
+        dc.DrawText(self._text + " - " + self._durationText, 5, 6-PSConfig.Y_OFFSET)
+
         if self._old:
             dc.SetFont(self._small_font)
-            dc.DrawText(self._date_txt,5, 38)
+            dc.DrawText(self._date_txt,5, 38-PSConfig.Y_OFFSET)
 
     def OnMouseDown(self, evt):
         self._selected = True
@@ -282,6 +311,7 @@ class RecordedTrackElement(wx.Panel):
 class RecordedTracksList(wx.PyScrolledWindow):
     def __init__(self, parent, size, pos):
         wx.ScrolledWindow.__init__(self, parent, size=size, pos=pos)
+        self.SetBackgroundColour("#323232")
         self.SetVirtualSize((self.GetSize()[0] - 15, 1000))
         self.scrollRate = 10
         self.SetScrollRate(1, self.scrollRate)
@@ -307,7 +337,11 @@ class RecordedTracksList(wx.PyScrolledWindow):
         dc.SetBrush(wx.Brush(wx.Colour(250, 250, 250)))
         dc.SetPen(wx.Pen(wx.Colour(250, 250, 250), 1))
         w, h = self.GetSize()
-        dc.DrawRectangle(w - 15, 0, 15, h)
+        if PSConfig.PLATFORM == 'linux2':
+            scroll_w = 13
+        elif PSConfig.PLATFORM == 'darwin':
+            scroll_w = 15
+        dc.DrawRectangle(w - scroll_w, 0, scroll_w, h)
 
     def _setVerticalScroll(self):
         self.SetVirtualSize((self.GetSize()[0] - 15, (self._getTotalListHeight() + self.y_margin)))
@@ -374,31 +408,32 @@ class RecordedTracksWindow(wx.Frame):
         self.server = server
         self.script_namespace = namespace
         wx.Frame.__init__(self, parent, id=-1, size=(200, 216), style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
-        self.SetTransparent(0)
         self.panel = wx.Panel(self, size=self.GetSize() + (1, 1))
         self.file_path = ""
         self.tracks_list = RecordedTracksList(self.panel, self.panel.GetSize() - (4, 26), (1, 23))
         self.__track_count__ = 0
 
         # position par rapport au frame principal
-        self.pos_offset = wx.Point(295, 94)
+        self.pos_offset = wx.Point(295, 94+PSConfig.BANNER_OFFSET)
 
         # s'occupe de l'enregistrement
         self._trackRecorder = PSAudio.TrackRecorder()
 
         # Fade in/out properties
         self.IS_SHOWN = False
-        self._alpha = 255
-        self._currentAlpha = 0
-        self._delta = 22
-        self._fadeTime = 27
-        self._timer = wx.Timer(self, -1)
+        if PSConfig.USE_TRANSPARENCY:
+            self.SetTransparent(0)
+            self._alpha = 255
+            self._currentAlpha = 0
+            self._delta = 22
+            self._fadeTime = 27
+            self._timer = wx.Timer(self, -1)
+            self.Bind(wx.EVT_TIMER, self.changeAlpha)
 
         # bitmap
         self.background = imgs.recorded_tracks_bg.GetBitmap()
 
         # Binding events
-        self.Bind(wx.EVT_TIMER, self.changeAlpha)
         self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
 
         self._checkRecFolderOnInit()
@@ -423,13 +458,17 @@ class RecordedTracksWindow(wx.Frame):
     def ShowWindow(self, pos):
         if not self.IS_SHOWN:
             self.IS_SHOWN = True
-            self.SetPosition(self.pos_offset + pos)
+            self.SetPosition(pos + self.pos_offset)
             self.Show(True)
-            self._timer.Start(self._fadeTime)
+            if PSConfig.USE_TRANSPARENCY:
+                self._timer.Start(self._fadeTime)
 
     def HideWindow(self):
         self.IS_SHOWN = False
-        self._timer.Start(self._fadeTime)
+        if PSConfig.USE_TRANSPARENCY:
+            self._timer.Start(self._fadeTime)
+        else:
+            self.Show(False)
         self.tracks_list.deletePlaybackObjects()
 
     def changeAlpha(self, evt):
@@ -861,7 +900,7 @@ class ServerSetupPanel(wx.Panel):
                             self.preferences['bfs'],
                             self.preferences['duplex'],
                             self.preferences['audio'],
-                            jackname="PyoSynth")
+                            jackname="Pyo Synth")
         self._server.setOutputDevice(self.preferences['output'])
         self._server.setMidiOutputDevice(self.preferences['midi_output'])
         if self.preferences['duplex']:
@@ -883,7 +922,7 @@ class ServerSetupPanel(wx.Panel):
                             self.preferences['bfs'],
                             self.preferences['duplex'],
                             audio="offline",
-                            jackname="PyoSynth")
+                            jackname="Pyo Synth")
         self._server.boot()
         if self._waitForServerToBoot():
             raise ServerNotBootedError, "Timeout expired: Server wasn't able to boot."
@@ -1856,6 +1895,14 @@ class ParamBox(BoxBase):
         self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_MOTION, self.OnMouseMove)
 
+    def Enable(self, state=True):
+        if state:
+            BoxBase.Enable(self)
+        else:
+            self.DRAGGED = False
+            self.CLICKED = False
+            BoxBase.Enable(self, False)
+
     def OnMove(self, evt):
         """
         Called by the main program OnMove method.
@@ -2063,10 +2110,6 @@ class ParamBox(BoxBase):
         dc.DrawLines(points)
 
     def OnMouseMove(self, evt):
-        if self.HasCapture():
-            print 'yes'
-        else:
-            print 'no'
         if self.CLICKED:
             if not self.DRAGGED:
                 self.DRAGGED = True
@@ -2079,7 +2122,8 @@ class ParamBox(BoxBase):
 
     def OnMouseDown(self, evt):
         self.CLICKED = True
-        #self.CaptureMouse()
+        if PSConfig.PLATFORM == 'darwin':
+            self.CaptureMouse()
         self.mouse_y_org = wx.GetMousePosition()[1]
         self.org_hijack_value = self.pyo_obj.getNormValue()
         if not self.HIJACKED:
@@ -2105,10 +2149,13 @@ class ParamBox(BoxBase):
             self.ShowPatchWindow(evt)
         else:
             self.DRAGGED = False
-        #self.ReleaseMouse()
+        if PSConfig.PLATFORM == 'darwin':
+            self.ReleaseMouse()
         self.CLICKED = False
 
     def OnMouseCaptureLost(self, evt):
+        self.DRAGGED = False
+        self.CLICKED = False
         self.OnMouseUp(evt)
 
     def OnQuit(self, evt):
