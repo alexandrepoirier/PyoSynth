@@ -271,7 +271,7 @@ class PyoSynth(wx.Frame):
         evt.Skip()
         if hasattr(self, 'warningWindow'):
             if isinstance(self.warningWindow, wx.Frame):
-                self.warningWindow.SetPosition(self.GetPosition()+self.warningWindowPos)
+                self.warningWindow.SetPosition(self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET))
         if self.patchWindow.IsShown():
             self.patchWindow._setPosition()
         if self.status_bar.tracks_window.IsShown():
@@ -757,7 +757,7 @@ class PyoSynth(wx.Frame):
         for i in range(1, len(PSConfig.midi_profiles[index])):
             self.midiKeys.ctl_list[i].setCtlNumber(PSConfig.midi_profiles[index][i])
         self._writeMidiProfilesToDisk()
-        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
+        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
                                            "Loaded MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
@@ -784,7 +784,7 @@ class PyoSynth(wx.Frame):
         self._load_profile_items[index].Check(True)
         PSConfig.last_used_midi_profile = index
         self._writeMidiProfilesToDisk()
-        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
+        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
                                            "Saved MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
@@ -795,7 +795,7 @@ class PyoSynth(wx.Frame):
         PSConfig.midi_profiles.pop(index)
         self._updateMidiProfileMenu()
         self._writeMidiProfilesToDisk()
-        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
+        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
                                            "Deleted MidiProfile %d" % (index+1))
         self.warningWindow.ShowWindow()
         wx.CallLater(2000, self.warningWindow.destroy)
@@ -819,7 +819,7 @@ class PyoSynth(wx.Frame):
         float_prec = 4 # will be available as a preference
         if not self.IS_RUNNING:
             # Affichage du message d'avertissement
-            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos,
+            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
                                                "Start script before saving values to script")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
@@ -843,7 +843,7 @@ class PyoSynth(wx.Frame):
             PSUtils.printMessage("Save Values in Script: Wrong extension for output file", 0)
             return
 
-        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos,
+        self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
                                            "Saving values in the script...")
         self.warningWindow.ShowWindow()
 
@@ -1382,7 +1382,8 @@ class PyoSynth(wx.Frame):
             self.runitem.Enable(True)
         else:
             PSUtils.printMessage("Started exporting script to samples...", 0)
-            self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos, "Exporting samples...")
+            self.warningWindow = WarningWindow(self, self.GetPosition() + self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                               "Exporting samples...")
             self.warningWindow.SetProgressBar()
             self.warningWindow.PulseProgressBar()
             self.warningWindow.ShowWindow(fade=False)
@@ -1579,7 +1580,8 @@ class PyoSynth(wx.Frame):
             f = open(path, 'r')
         except IOError, e:
             # Affichage du message d'avertissement
-            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Could not save the patch...")
+            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                               "Could not save the patch...")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
         else:
@@ -1601,7 +1603,8 @@ class PyoSynth(wx.Frame):
             f.write("\npyosynth.setPreset(preset)")
             f.close()
             # Affichage du message d'avertissement
-            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Patch saved")
+            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                               "Patch saved")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
             
@@ -1610,7 +1613,8 @@ class PyoSynth(wx.Frame):
             f = open(source, 'r')
         except IOError, e:
             # Affichage du message d'avertissement
-            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Could not save the patch...")
+            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                               "Could not save the patch...")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
         else:
@@ -1632,7 +1636,8 @@ class PyoSynth(wx.Frame):
             f.write("\npyosynth.setPreset(preset)")
             f.close()
             # Affichage du message d'avertissement
-            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Patch saved")
+            self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                               "Patch saved")
             self.warningWindow.ShowWindow()
             wx.CallLater(2000,self.warningWindow.destroy)
             return 1
@@ -1752,7 +1757,8 @@ class PyoSynth(wx.Frame):
 
         self.reset_boxes_item.Enable(False)
         ##Affichage du message d'avertissement
-        self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos, "Matching preset values...")
+        self.warningWindow = WarningWindow(self, self.GetPosition()+self.warningWindowPos+(0,PSConfig.BANNER_OFFSET),
+                                           "Matching preset values...")
         self.warningWindow.ShowWindow()
         self.Raise() # little hack to give focus to the main frame after instantiating the WarningWindow
         self._nextPreset()

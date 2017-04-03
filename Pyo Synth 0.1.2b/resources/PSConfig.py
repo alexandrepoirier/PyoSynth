@@ -39,16 +39,25 @@ if PLATFORM == 'linux2':
     Y_OFFSET = 3
     X_OFFSET = 1
     BANNER_OFFSET = 43
+    GAUGE_Y_DELTA = 5
+    CHOICE_SIZE = (-1, 25)
+    EXPORT_WIN_SIZE = (410, 358)
     USE_TRANSPARENCY = False
 elif PLATFORM == 'win32':
     Y_OFFSET = 0
     X_OFFSET = 0
     BANNER_OFFSET = 0
+    GAUGE_Y_DELTA = 0
+    CHOICE_SIZE = (-1, 25)
+    EXPORT_WIN_SIZE = (410, 370)
     USE_TRANSPARENCY = False
 elif PLATFORM == 'darwin':
     Y_OFFSET = 0
     X_OFFSET = 0
     BANNER_OFFSET = 0
+    GAUGE_Y_DELTA = 0
+    CHOICE_SIZE = (-1, -1)
+    EXPORT_WIN_SIZE = (410, 370)
     USE_TRANSPARENCY = True
 
 REFRESH_RATE = 1./13

@@ -583,27 +583,27 @@ class ServerSetupPanel(wx.Panel):
 
         # Controls
         x, y = self.interfaceCtrlPos
-        self.inputChoice = wx.Choice(self, -1, (x + 6, y + 36), choices=self.listDevices("input"))
-        self.outputChoice = wx.Choice(self, -1, (x + 6, y + 80), choices=self.listDevices("output"))
+        self.inputChoice = wx.Choice(self, -1, (x + 6, y + 36), PSConfig.CHOICE_SIZE, choices=self.listDevices("input"))
+        self.outputChoice = wx.Choice(self, -1, (x + 6, y + 80), PSConfig.CHOICE_SIZE, choices=self.listDevices("output"))
 
         x, y = self.midiCtrlPos
-        self.midiInputChoice = wx.Choice(self, -1, (x + 6, y + 36), choices=self.listMidiDevices("input"))
-        self.midiOutputChoice = wx.Choice(self, -1, (x + 6, y + 80), choices=self.listMidiDevices("output"))
+        self.midiInputChoice = wx.Choice(self, -1, (x + 6, y + 36), PSConfig.CHOICE_SIZE, choices=self.listMidiDevices("input"))
+        self.midiOutputChoice = wx.Choice(self, -1, (x + 6, y + 80), PSConfig.CHOICE_SIZE, choices=self.listMidiDevices("output"))
 
         x, y = self.sampratePos
-        self.samprateChoice = wx.Choice(self, -1, (x + 100, y - 6), choices=self.samplingRates)
+        self.samprateChoice = wx.Choice(self, -1, (x + 100, y - 6), PSConfig.CHOICE_SIZE, choices=self.samplingRates)
 
         x, y = self.bufsizePos
-        self.bufsizeChoice = wx.Choice(self, -1, (x + 80, y - 6), choices=self.bufferSizes)
+        self.bufsizeChoice = wx.Choice(self, -1, (x + 80, y - 6), PSConfig.CHOICE_SIZE, choices=self.bufferSizes)
 
         x, y = self.audioDriverPos
-        self.audioDriverChoice = wx.Choice(self, -1, (x + 90, y - 6), choices=self.audioDrivers)
+        self.audioDriverChoice = wx.Choice(self, -1, (x + 90, y - 6), PSConfig.CHOICE_SIZE, choices=self.audioDrivers)
 
         x, y = self.duplexPos
-        self.duplexChoice = wx.Choice(self, -1, (x + 60, y - 6), choices=['out', 'in/out'])
+        self.duplexChoice = wx.Choice(self, -1, (x + 60, y - 6), PSConfig.CHOICE_SIZE, choices=['out', 'in/out'])
 
         x, y = self.numChnlsPos
-        self.numChnlsChoice = wx.Choice(self, -1, (x + 80, y - 6), choices=self.numberChnls)
+        self.numChnlsChoice = wx.Choice(self, -1, (x + 80, y - 6), PSConfig.CHOICE_SIZE, choices=self.numberChnls)
 
         # Binding events
         self.Bind(wx.EVT_PAINT, self.OnPaint)
@@ -1270,7 +1270,6 @@ class WarningWindow(wx.Frame):
     min_size = wx.Size(200, 40)
     def __init__(self, parent, pos, text):
         wx.Frame.__init__(self, parent, -1, pos=pos, size=WarningWindow.min_size, style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
-        self.SetTransparent(0)
         self.panel = wx.Panel(self, size=WarningWindow.min_size + (1, 1))
         self.panel.SetBackgroundColour("#888888")
 
@@ -1282,27 +1281,29 @@ class WarningWindow(wx.Frame):
         self._x_margin = 15
         self._setSize() # size is set according to text width
 
-        # Fade in/out properties
         self.IS_SHOWN = False
-        self._alpha = 220
-        self._currentAlpha = 0
-        self._delta = 22
-        self._fadeTime = 27
-        self._timer = wx.Timer(self, -1)
+        # Fade in/out properties
+        if PSConfig.USE_TRANSPARENCY:
+            self.SetTransparent(0)
+            self._alpha = 220
+            self._currentAlpha = 0
+            self._delta = 22
+            self._fadeTime = 27
+            self._timer = wx.Timer(self, -1)
+            self.Bind(wx.EVT_TIMER, self._changeAlpha)
 
         # Binding events
         self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
-        self.Bind(wx.EVT_TIMER, self._changeAlpha)
 
     def OnPaint(self, evt):
         w, h = self.GetSize()
-        dc = wx.PaintDC(self)
+        dc = wx.PaintDC(self.panel) # test this on mac: self vs. self.panel
 
         dc.SetTextForeground("#FFFFFF")
         dc.SetFont(self._normal_font)
 
         txt_w, txt_h = dc.GetTextExtent(self._top_line)
-        dc.DrawText(self._top_line, (w / 2 - txt_w / 2), self._y_margin + 2)
+        dc.DrawText(self._top_line, (w / 2 - txt_w / 2), self._y_margin + 2 - PSConfig.Y_OFFSET)
         if self._bottom_line is not None:
             txt_w, txt_h = dc.GetTextExtent(self._bottom_line)
             dc.SetFont(self._small_font)
@@ -1320,7 +1321,7 @@ class WarningWindow(wx.Frame):
 
     def SetProgressBar(self):
         self._gauge = wx.Gauge(self, -1, 100, (self._x_margin, self.GetSize()[1]/2-5),
-                               (self.GetSize()[0] - 2*self._x_margin, -1))
+                               (self.GetSize()[0] - 2*self._x_margin, -1 + PSConfig.GAUGE_Y_DELTA))
         self._setSize()
 
     def SetProgressRange(self, value):
@@ -1338,15 +1339,20 @@ class WarningWindow(wx.Frame):
     def ShowWindow(self, fade=True):
         self.IS_SHOWN = True
         self.Show(True)
-        if fade:
-            self._timer.Start(self._fadeTime)
-        else:
-            self.SetTransparent(255)
-            self._currentAlpha = 255
+        if PSConfig.USE_TRANSPARENCY:
+            if fade:
+                self._timer.Start(self._fadeTime)
+            else:
+                self.SetTransparent(255)
+                self._currentAlpha = 255
 
     def destroy(self):
         self.IS_SHOWN = False
-        self._timer.Start(self._fadeTime)
+        if PSConfig.USE_TRANSPARENCY:
+            self._timer.Start(self._fadeTime)
+        else:
+            self.Show(False)
+            self.Destroy()
 
     def _changeAlpha(self, evt):
         if self.IS_SHOWN:
@@ -1377,7 +1383,7 @@ class WarningWindow(wx.Frame):
         if hasattr(self, "_gauge"):
             gauge_w = w - 2*self._x_margin
             self._gauge.SetSize((gauge_w, -1))
-            self._gauge.SetPosition(((w - gauge_w) / 2, h/2-5))
+            self._gauge.SetPosition(((w - gauge_w) / 2, h/2-5 + PSConfig.GAUGE_Y_DELTA))
 
     def _getWidth(self):
         """
@@ -1393,7 +1399,7 @@ class WarningWindow(wx.Frame):
         return w
 
     def _getHeight(self):
-        h = (WarningWindow.min_size[1] + 5) if hasattr(self, "_gauge") else WarningWindow.min_size[1]
+        h = (WarningWindow.min_size[1] + 5 + PSConfig.GAUGE_Y_DELTA) if hasattr(self, "_gauge") else WarningWindow.min_size[1]
         dc = wx.ClientDC(self)
         dc.SetFont(self._normal_font)
         h = h if self._bottom_line is None else (h + dc.GetTextExtent(self._top_line)[1] + 5)
@@ -1800,13 +1806,13 @@ class BoxBase(wx.Panel):
             self.hijack_inactive_fill_color = (112, 163, 79, 38)
         elif PSConfig.PLATFORM in ('win32', 'linux2'):
             self.active_color = "#d8ff00"
-            self.inactive_color = "#e6ff74"
-            self.hijack_color = "#6cff00"
-            self.hijack_inactive_color = "#c2ff7c"
-            self.active_fill_color = (194, 172, 25)
-            self.inactive_fill_color = (99, 98, 34)
-            self.hijack_fill_color = (96, 162, 56)
-            self.hijack_inactive_fill_color = (60, 88, 31)
+            self.inactive_color = "#e4ff81"
+            self.hijack_color = "#7ce51e"
+            self.hijack_inactive_color = "#a7ea6c"
+            self.active_fill_color = (134,171,0)
+            self.inactive_fill_color = (108,127,38)
+            self.hijack_fill_color = (78,144,19)
+            self.hijack_inactive_fill_color = (71,102,44)
 
         # Variables generales
         self.parent = parent
@@ -2038,7 +2044,7 @@ class ParamBox(BoxBase):
                     # affichage de la valeur du preset
                     dc.SetFont(self.midiLearnFont)
                     cur_col = dc.GetTextForeground() # changes according to hijack vs. normal
-                    dc.SetTextForeground("#EDAF42")
+                    dc.SetTextForeground("#d31ee5")
                     if self.DISPLAY_DB:
                         text_preset_value = self._getDBDisplayValue(self.preset_value)
                     else:
@@ -2714,14 +2720,18 @@ class MenuPanel(wx.Panel):
 
 class ExportWindow(wx.Dialog):
     def __init__(self, parent, prefs=None):
-        wx.Dialog.__init__(self, parent, -1, "Export Samples", size=(410, 370))
+        wx.Dialog.__init__(self, parent, -1, "Export Samples", size=PSConfig.EXPORT_WIN_SIZE)
         self.path = PSConfig.HOME_PATH
         self.bg = imgs.export_win_bg.GetBitmap()
 
         # Y positions
+        if PSConfig.PLATFORM == 'linux2':
+            self.section_x_offset = 5
+        else:
+            self.section_x_offset = 0
         outputFolder = 14
         exportRange = 85
-        fileSpecs = 210
+        fileSpecs = 210 + self.section_x_offset
         margin_x = 14
 
         # Output folder
@@ -2771,14 +2781,14 @@ class ExportWindow(wx.Dialog):
         formats = ['.wav', '.aiff', '.au', '.raw', '.sd2', '.flac', '.caf', '.ogg']
         label = wx.StaticText(self, -1, "Format :", (margin_x + 5, fileSpecs + 29))
         label.SetForegroundColour("#f0f4d7")
-        self.fileFormat = wx.Choice(self, -1, (margin_x + 60, fileSpecs + 27), choices=formats)
+        self.fileFormat = wx.Choice(self, -1, (margin_x + 60, fileSpecs + 27), PSConfig.CHOICE_SIZE, choices=formats)
 
         # bit depth
         bits = ['16 bits int', '24 bits int', '32 bits int', '32 bits float', '64 bits float',
                 'U-Law encoded', 'A-Law encoded']
         label = wx.StaticText(self, -1, "Bit Depth :", (margin_x + 160, fileSpecs + 29))
         label.SetForegroundColour("#f0f4d7")
-        self.bitDepth = wx.Choice(self, -1, (margin_x + 230, fileSpecs + 27), choices=bits)
+        self.bitDepth = wx.Choice(self, -1, (margin_x + 230, fileSpecs + 27), PSConfig.CHOICE_SIZE, choices=bits)
 
         # File length
         label = wx.StaticText(self, -1, "Length :", (margin_x + 5, fileSpecs + 59))
@@ -2790,9 +2800,13 @@ class ExportWindow(wx.Dialog):
         secs = wx.StaticText(self, -1, "secs.", (margin_x + 100, fileSpecs + 59))
         secs.SetForegroundColour("#f0f4d7")
 
-        btn = PSButtons.PSRectangleButton(self, (120, 310), (65, 23), "OK", id=wx.ID_OK)
+        sizex = 65
+        sizey = 23
+        x1 = PSConfig.EXPORT_WIN_SIZE[0] / 2 - sizex - margin_x / 2
+        y = 310 + self.section_x_offset*2
+        btn = PSButtons.PSRectangleButton(self, (x1, y), (sizex, sizey), "OK", id=wx.ID_OK)
         self.Bind(PSButtons.EVT_BTN_CLICKED, self._endModal, btn)
-        btn = PSButtons.PSRectangleButton(self, (193, 310), (65, 23), "CANCEL", id=wx.ID_CANCEL)
+        btn = PSButtons.PSRectangleButton(self, (x1+sizex+margin_x/2, y), (sizex, sizey), "CANCEL", id=wx.ID_CANCEL)
         self.Bind(PSButtons.EVT_BTN_CLICKED, self._endModal, btn)
 
         if prefs is not None:
@@ -2809,9 +2823,10 @@ class ExportWindow(wx.Dialog):
         color = PSUtils.getTransparentColour(56, "#4f4f4f")[0]
         dc.SetBrush(wx.Brush(color))
         dc.SetPen(wx.Pen(color, 1))
+        # gray backgrounds
         dc.DrawRectangle(7, 7, w - 14, 63)
-        dc.DrawRectangle(7, 80, w - 14, 110)
-        dc.DrawRectangle(7, 200, w - 14, 95)
+        dc.DrawRectangle(7, 80, w - 14, 110+self.section_x_offset)
+        dc.DrawRectangle(7, 200+self.section_x_offset, w - 14, 95+self.section_x_offset)
 
     def OnChangeMin(self, evt):
         i = self.midiMin.GetValue()
