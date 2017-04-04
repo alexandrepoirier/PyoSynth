@@ -24,7 +24,7 @@ from PSAudio import Click
 from controlsPyImg import *
 from threading import Timer
 
-if PSConfig.PLATFORM == 'linux2':
+if PSConfig.USE_PYO64:
     from pyo64 import Midictl, Change, TrigFunc, CtlScan
 else:
     from pyo import Midictl, Change, TrigFunc, CtlScan

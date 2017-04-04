@@ -39,7 +39,7 @@ import PSUtils
 import interfacePyImg as imgs
 from pyoParamTree import PARAMS_TREE_DICT
 
-if PSConfig.PLATFORM == 'linux2':
+if PSConfig.USE_PYO64:
     from pyo64 import *
 else:
     from pyo import *
@@ -550,7 +550,8 @@ class ServerSetupPanel(wx.Panel):
         self.USING_VIRTUAL_KEYS = False
 
         self.hasPreferences = False
-        self.preferences = self.getPreferences()
+        self.preferences = None
+        self.getPreferences()
 
         # Fade in/out properties
         self.IS_SHOWN = False
@@ -617,7 +618,7 @@ class ServerSetupPanel(wx.Panel):
         self.Bind(wx.EVT_CHOICE, self.changeDuplex, self.duplexChoice)
         self.Bind(wx.EVT_CHOICE, self.changeNumChnls, self.numChnlsChoice)
 
-        self.markDirty() # make sure the server is initialized with preferences when running a script for the first time
+        #self.markDirty() # make sure the server is initialized with preferences when running a script for the first time
 
     def OnPaint(self, evt):
         w, h = self.GetSize()
@@ -821,38 +822,11 @@ class ServerSetupPanel(wx.Panel):
         Tries to open pref file on HD, otherwise sets server to default settings.
         Done once upon startup. If preferences values aren't valid anymore, the default settings are restored.
         """
-        try:
-            f = open(os.path.join(PSConfig.PREF_PATH, "server_setup.pref"), 'r')
-            self.hasPreferences = True
-        except IOError, e:
-            self.hasPreferences = False
-            if pm_get_default_input() == -1:
-                self.USING_VIRTUAL_KEYS = True
-                event = ServerSetupEvent(myEVT_VIRTUAL_KEYS_CHANGED, self.GetId())
-                wx.CallLater(200, self.GetEventHandler().ProcessEvent, event)
-            return {'sr': 44100, 'nchnls': 2, 'bfs': 256, 'duplex': 1, 'audio': 'portaudio',
-                    'output': pa_get_default_output(),
-                    'input': pa_get_default_input(),
-                    'midi_output': pm_get_default_output(),
-                    'midi_input': pm_get_default_input()}
-        else:
-            pref = pickle.load(f)
-            f.close()
-            # verify if input/output interfaces are there
-            if pref['output'] not in pa_get_output_devices()[1]:
-                pref['output'] = pa_get_default_output()
-            if pref['input'] not in pa_get_input_devices()[1]:
-                pref['input'] = pa_get_default_input()
-            if pref['midi_output'] not in pm_get_output_devices()[1]:
-                pref['midi_output'] = pm_get_default_output()
-            if pref['midi_input'] not in pm_get_input_devices()[1]:
-                default_in = pm_get_default_input()
-                if default_in == -1:
-                    self.USING_VIRTUAL_KEYS = True
-                    event = ServerSetupEvent(myEVT_VIRTUAL_KEYS_CHANGED, self.GetId())
-                    wx.CallLater(200, self.GetEventHandler().ProcessEvent, event)
-                pref['midi_input'] = default_in
-            return pref
+        self.hasPreferences, self.preferences = PSUtils.getServerPreferences()
+        if self.preferences['midi_input'] == -1:
+            self.USING_VIRTUAL_KEYS = True
+            event = ServerSetupEvent(myEVT_VIRTUAL_KEYS_CHANGED, self.GetId())
+            wx.CallLater(200, self.GetEventHandler().ProcessEvent, event)
 
     def savePreferences(self):
         try:
@@ -998,8 +972,8 @@ class ServerSetupPanel(wx.Panel):
             list.extend(self.listDevices("output"))
             # set the size according to largest choice
             tw = self.getLongestText(list)
-            self.inputChoice.SetSize((tw + 48, -1))
-            self.outputChoice.SetSize((tw + 48, -1))
+            self.inputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
+            self.outputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
             names, indexes = pa_get_input_devices()
             self.inputChoice.SetSelection(indexes.index(self.preferences['input']))
 
@@ -1016,14 +990,14 @@ class ServerSetupPanel(wx.Panel):
                 self.midiInputChoice.SetSelection(0)
                 self.midiOutputChoice.SetSelection(0)
                 tw = self.getLongestText(list)
-                self.midiInputChoice.SetSize((tw + 48, -1))
-                self.midiOutputChoice.SetSize((tw + 48, -1))
+                self.midiInputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
+                self.midiOutputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
             else:
                 self.midiInputChoice.SetItems(list)
                 list.extend(self.listMidiDevices("output"))
                 tw = self.getLongestText(list)
-                self.midiInputChoice.SetSize((tw + 48, -1))
-                self.midiOutputChoice.SetSize((tw + 48, -1))
+                self.midiInputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
+                self.midiOutputChoice.SetSize((tw + 48 + PSConfig.CHOICE_X_DELTA, -1))
 
                 if self.USING_VIRTUAL_KEYS:
                     self.midiInputChoice.SetSelection(self.midiInputChoice.GetCount()-1)
@@ -1907,6 +1881,7 @@ class ParamBox(BoxBase):
         else:
             self.DRAGGED = False
             self.CLICKED = False
+            self.ReleaseMouse()
             BoxBase.Enable(self, False)
 
     def OnMove(self, evt):
@@ -2128,8 +2103,7 @@ class ParamBox(BoxBase):
 
     def OnMouseDown(self, evt):
         self.CLICKED = True
-        if PSConfig.PLATFORM == 'darwin':
-            self.CaptureMouse()
+        self.CaptureMouse()
         self.mouse_y_org = wx.GetMousePosition()[1]
         self.org_hijack_value = self.pyo_obj.getNormValue()
         if not self.HIJACKED:
@@ -2155,8 +2129,7 @@ class ParamBox(BoxBase):
             self.ShowPatchWindow(evt)
         else:
             self.DRAGGED = False
-        if PSConfig.PLATFORM == 'darwin':
-            self.ReleaseMouse()
+        self.ReleaseMouse()
         self.CLICKED = False
 
     def OnMouseCaptureLost(self, evt):

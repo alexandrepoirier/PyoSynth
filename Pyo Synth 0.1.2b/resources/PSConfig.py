@@ -27,17 +27,19 @@ import wx
 #--------------------------------------------
 #--------------- Constantes -----------------
 #--------------------------------------------
-VERSIONS = {'Pyo Synth':"0.1.2b", 'pyo':(0,8,4), 'python':(2,7,13)}
+VERSIONS = {'Pyo Synth':"0.1.2b", 'pyo':(0,8,5), 'python':(2,7,13)}
 PLATFORM = sys.platform
 crash_save_func = None
 hide_main_win = None
 UNIT_SIZE = (130,110)
 WHEELS_BOX_WIDTH = 100
 NB_ELEM_ROW = 8
+USE_PYO64 = False
 
 if PLATFORM == 'linux2':
     Y_OFFSET = 3
     X_OFFSET = 1
+    CHOICE_X_DELTA = 70
     BANNER_OFFSET = 43
     GAUGE_Y_DELTA = 5
     CHOICE_SIZE = (-1, 25)
@@ -46,6 +48,7 @@ if PLATFORM == 'linux2':
 elif PLATFORM == 'win32':
     Y_OFFSET = 0
     X_OFFSET = 0
+    CHOICE_X_DELTA = 0
     BANNER_OFFSET = 0
     GAUGE_Y_DELTA = 0
     CHOICE_SIZE = (-1, 25)
@@ -54,6 +57,7 @@ elif PLATFORM == 'win32':
 elif PLATFORM == 'darwin':
     Y_OFFSET = 0
     X_OFFSET = 0
+    CHOICE_X_DELTA = 0
     BANNER_OFFSET = 0
     GAUGE_Y_DELTA = 0
     CHOICE_SIZE = (-1, -1)

@@ -23,16 +23,25 @@ along with Pyo Synth.  If not, see <http://www.gnu.org/licenses/>.
 import wx
 import sys
 import resources.extra as extra
+from resources.PSUtils import getServerPreferences
+from resources.PSConfig import USE_PYO64
 
-if sys.platform == 'linux2':
+if USE_PYO64:
     from pyo64 import *
 else:
     from pyo import *
 
-
 from resources import __main__
 
-s = Server().boot()
+
+prefs = getServerPreferences()[1]
+s = Server(sr=prefs['sr'], buffersize=prefs['bfs'], nchnls=prefs['nchnls'],
+           duplex=prefs['duplex'], audio=prefs['audio'], jackname='Pyo Synth')
+s.setInputDevice(prefs['input'])
+s.setOutputDevice(prefs['output'])
+s.setMidiInputDevice(prefs['midi_input'])
+s.setMidiOutputDevice(prefs['midi_output'])
+s.boot()
 app = wx.App(False)
 pyosynth = __main__.PyoSynth(s, locals())
 sys.stdout = pyosynth.terminal_win

@@ -30,11 +30,14 @@ import pickle
 import time
 import PSInterface
 import math
+import os.path
 
-if PSConfig.PLATFORM == 'linux2':
-    from pyo64 import midiToHz
+if PSConfig.USE_PYO64:
+    from pyo64 import midiToHz, pa_get_default_output, pa_get_default_input, pm_get_default_output, pm_get_default_input
+    from pyo64 import pa_get_output_devices, pa_get_input_devices, pm_get_output_devices, pm_get_input_devices
 else:
-    from pyo import midiToHz
+    from pyo import midiToHz, pa_get_default_output, pa_get_default_input, pm_get_default_output, pm_get_default_input
+    from pyo import pa_get_output_devices, pa_get_input_devices, pm_get_output_devices, pm_get_input_devices
 
 
 def getTransparentColour(alpha, *colours):
@@ -133,3 +136,33 @@ def getTimeFromSeconds(value):
     hours = minutes / 60
     minutes = minutes % 60
     return (hours, minutes, seconds)
+
+def getServerPreferences():
+    """
+    Tries to open pref file on HD, otherwise sets server to default settings.
+    Done once upon startup. If preferences values aren't valid anymore, the default settings are restored.
+    """
+    try:
+        f = open(os.path.join(PSConfig.PREF_PATH, "server_setup.pref"), 'r')
+        HAS_PREFS = True
+    except IOError, e:
+        HAS_PREFS = False
+        return (HAS_PREFS,
+                {'sr': 44100, 'nchnls': 2, 'bfs': 256, 'duplex': 1, 'audio': 'portaudio',
+                'output': pa_get_default_output(),
+                'input': pa_get_default_input(),
+                'midi_output': pm_get_default_output(),
+                'midi_input': pm_get_default_input()})
+    else:
+        pref = pickle.load(f)
+        f.close()
+        # verify if input/output interfaces are there
+        if pref['output'] not in pa_get_output_devices()[1]:
+            pref['output'] = pa_get_default_output()
+        if pref['input'] not in pa_get_input_devices()[1]:
+            pref['input'] = pa_get_default_input()
+        if pref['midi_output'] not in pm_get_output_devices()[1]:
+            pref['midi_output'] = pm_get_default_output()
+        if pref['midi_input'] not in pm_get_input_devices()[1]:
+            pref['midi_input'] = pm_get_default_input()
+        return (HAS_PREFS, pref)

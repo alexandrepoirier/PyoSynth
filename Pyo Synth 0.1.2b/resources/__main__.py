@@ -29,7 +29,7 @@ import PSConfig
 import re
 import gc
 
-if PSConfig.PLATFORM == 'linux2':
+if PSConfig.USE_PYO64:
     from pyo64 import Metro, TrigFunc, class_args, CallAfter
 else:
     from pyo import Metro, TrigFunc, class_args, CallAfter

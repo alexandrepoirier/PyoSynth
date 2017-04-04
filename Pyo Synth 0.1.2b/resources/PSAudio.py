@@ -23,7 +23,7 @@ import time
 import os.path
 import extra
 
-if PSConfig.PLATFORM == 'linux2':
+if PSConfig.USE_PYO64:
     from pyo64 import *
 else:
     from pyo import *
