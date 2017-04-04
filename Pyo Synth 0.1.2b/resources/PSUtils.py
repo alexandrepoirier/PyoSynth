@@ -117,6 +117,8 @@ def openSysFileBrowser(path):
         subprocess.Popen(r'explorer /select,%s' % path)
     elif sys.platform == 'darwin':
         subprocess.call(["open", "-R", path])
+    elif sys.platform == 'linux2':
+        subprocess.call(['gnome-open', path])
 
 def printMessage(text, level=0):
     if level <= PSConfig.VERBOSE_LVL:

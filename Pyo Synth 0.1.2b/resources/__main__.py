@@ -291,7 +291,12 @@ class PyoSynth(wx.Frame):
         wx.AboutBox(self.aboutinfo)
         
     def _help(self, evt):
-        os.system('open ' + PSConfig.HELP_DOC.replace(' ', '\ '))
+        if PSConfig.PLATFORM == 'darwin':
+            os.system('open ' + PSConfig.HELP_DOC.replace(' ', '\ '))
+        elif PSConfig.PLATFORM == 'linux2':
+            os.system('gnome-open ' + PSConfig.HELP_DOC.replace(' ', '\ '))
+        elif PSConfig.PLATFORM == 'win32':
+            subprocess.Popen(r'explorer /select,%s' % path)
 
     def _updateInterfaceTextByEvent(self, evt):
         self.menu_panel.updateInterfaceTxt()
