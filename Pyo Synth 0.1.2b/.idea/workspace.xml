@@ -4,8 +4,8 @@
     <list default="true" id="8c9f8ef2-77ef-4d08-9f2c-62cae303d999" name="Default" comment="">
       <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/interface.py" afterPath="$PROJECT_DIR$/resources/interface.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/controls.py" afterPath="$PROJECT_DIR$/resources/controls.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/buttons.py" afterPath="$PROJECT_DIR$/resources/buttons.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/controls.py" afterPath="$PROJECT_DIR$/resources/controls.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -35,7 +35,7 @@
       <file leaf-file-name="Pyo Synth.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
+            <state relative-caret-position="63">
               <caret line="11" column="47" lean-forward="false" selection-start-line="11" selection-start-column="47" selection-end-line="11" selection-end-column="47" />
               <folding>
                 <element signature="e#813#822#0" expanded="true" />
@@ -47,7 +47,7 @@
       <file leaf-file-name="PSControls.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
+            <state relative-caret-position="75">
               <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
               <folding>
                 <element signature="e#790#811#0" expanded="true" />
@@ -64,11 +64,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__main__.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/resources/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="316">
-              <caret line="297" column="42" lean-forward="true" selection-start-line="297" selection-start-column="42" selection-end-line="297" selection-end-column="42" />
+            <state relative-caret-position="-3645">
+              <caret line="30" column="17" lean-forward="false" selection-start-line="30" selection-start-column="17" selection-end-line="30" selection-end-column="17" />
               <folding>
                 <element signature="e#790#815#0" expanded="true" />
               </folding>
@@ -79,7 +79,7 @@
       <file leaf-file-name="PSAudio.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/resources/PSAudio.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="330">
+            <state relative-caret-position="15">
               <caret line="25" column="21" lean-forward="false" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
               <folding />
             </state>
@@ -89,7 +89,7 @@
       <file leaf-file-name="PSInterface.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="89">
+            <state relative-caret-position="1320">
               <caret line="536" column="33" lean-forward="false" selection-start-line="536" selection-start-column="33" selection-end-line="536" selection-end-column="33" />
               <folding>
                 <element signature="e#831#842#0" expanded="true" />
@@ -119,8 +119,8 @@
       <file leaf-file-name="PSUtils.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="288">
-              <caret line="119" column="34" lean-forward="true" selection-start-line="119" selection-start-column="34" selection-end-line="119" selection-end-column="34" />
+            <state relative-caret-position="558">
+              <caret line="119" column="34" lean-forward="false" selection-start-line="119" selection-start-column="34" selection-end-line="119" selection-end-column="34" />
               <folding>
                 <element signature="e#831#840#0" expanded="true" />
               </folding>
@@ -188,6 +188,7 @@
         <option value="$PROJECT_DIR$/resources/PSInterface.py" />
         <option value="$PROJECT_DIR$/resources/PSUtils.py" />
         <option value="$PROJECT_DIR$/resources/__main__.py" />
+        <option value="$PROJECT_DIR$/resources/main.py" />
       </list>
     </option>
   </component>
@@ -213,7 +214,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -243,6 +243,7 @@
         </subPane>
       </pane>
       <pane id="Scope" />
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -498,7 +499,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+    <entry file="file://$PROJECT_DIR$/resources/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="8115">
           <caret line="541" column="29" lean-forward="true" selection-start-line="541" selection-start-column="29" selection-end-line="541" selection-end-column="29" />
@@ -598,7 +599,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+    <entry file="file://$PROJECT_DIR$/resources/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="7860">
           <caret line="524" column="97" lean-forward="false" selection-start-line="524" selection-start-column="97" selection-end-line="524" selection-end-column="97" />
@@ -698,7 +699,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+    <entry file="file://$PROJECT_DIR$/resources/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="7710">
           <caret line="524" column="97" lean-forward="false" selection-start-line="524" selection-start-column="97" selection-end-line="524" selection-end-column="97" />
@@ -781,7 +782,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+    <entry file="file://$PROJECT_DIR$/resources/main.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3615">
           <caret line="241" column="78" lean-forward="false" selection-start-line="241" selection-start-column="78" selection-end-line="241" selection-end-column="78" />
@@ -943,14 +944,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/PSAudio.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="25" column="21" lean-forward="false" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/resources/PSButtons.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="300">
@@ -975,19 +968,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="47" lean-forward="false" selection-start-line="11" selection-start-column="47" selection-end-line="11" selection-end-column="47" />
-          <folding>
-            <element signature="e#813#822#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/resources/PSControls.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
+        <state relative-caret-position="75">
           <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
           <folding>
             <element signature="e#790#811#0" expanded="true" />
@@ -1005,7 +988,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/resources/PSInterface.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="89">
+        <state relative-caret-position="1320">
           <caret line="536" column="33" lean-forward="false" selection-start-line="536" selection-start-column="33" selection-end-line="536" selection-end-column="33" />
           <folding>
             <element signature="e#831#842#0" expanded="true" />
@@ -1031,20 +1014,38 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/Pyo Synth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="63">
+          <caret line="11" column="47" lean-forward="false" selection-start-line="11" selection-start-column="47" selection-end-line="11" selection-end-column="47" />
+          <folding>
+            <element signature="e#813#822#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/resources/PSUtils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="288">
-          <caret line="119" column="34" lean-forward="true" selection-start-line="119" selection-start-column="34" selection-end-line="119" selection-end-column="34" />
+        <state relative-caret-position="558">
+          <caret line="119" column="34" lean-forward="false" selection-start-line="119" selection-start-column="34" selection-end-line="119" selection-end-column="34" />
           <folding>
             <element signature="e#831#840#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/resources/__main__.py">
+    <entry file="file://$PROJECT_DIR$/resources/PSAudio.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="316">
-          <caret line="297" column="42" lean-forward="true" selection-start-line="297" selection-start-column="42" selection-end-line="297" selection-end-column="42" />
+        <state relative-caret-position="15">
+          <caret line="25" column="21" lean-forward="false" selection-start-line="25" selection-start-column="21" selection-end-line="25" selection-end-column="21" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/resources/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-3645">
+          <caret line="30" column="17" lean-forward="false" selection-start-line="30" selection-start-column="17" selection-end-line="30" selection-end-column="17" />
           <folding>
             <element signature="e#790#815#0" expanded="true" />
           </folding>

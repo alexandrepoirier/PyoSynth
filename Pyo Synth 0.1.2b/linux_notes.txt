@@ -1,0 +1,10 @@
+Si PyoSynth génère des erreurs GdkPixbuf-Critical, c'est soit parce que
+l'utilisateur doit mettre son dossier mime à jour:
+
+update-mime-database ~/.local/share/mime
+
+soit parce que ce dossier n'existe pas:
+
+cp -r /usr/share/mime ~/.local/share
+
+Il est préférable de mettre la base de donnée à jour avant de faire la copie.

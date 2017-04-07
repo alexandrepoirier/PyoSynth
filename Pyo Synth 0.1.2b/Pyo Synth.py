@@ -31,7 +31,7 @@ if USE_PYO64:
 else:
     from pyo import *
 
-from resources import __main__
+from resources import main
 
 
 prefs = getServerPreferences()[1]
@@ -43,7 +43,7 @@ s.setMidiInputDevice(prefs['midi_input'])
 s.setMidiOutputDevice(prefs['midi_output'])
 s.boot()
 app = wx.App(False)
-pyosynth = __main__.PyoSynth(s, locals())
+pyosynth = main.PyoSynth(s, locals())
 sys.stdout = pyosynth.terminal_win
 pyosynth.Show()
 app.MainLoop()
