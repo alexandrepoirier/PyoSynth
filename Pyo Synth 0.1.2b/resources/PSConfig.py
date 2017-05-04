@@ -121,11 +121,11 @@ elif PLATFORM == 'win32':
     monofont = 'Consolas'
 
 FONTS = {'light':{'xsmall':{'pointSize':10-x, 'family':wx.FONTFAMILY_SWISS,
-                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT},
                   'small':{'pointSize':11-x, 'family':wx.FONTFAMILY_SWISS,
-                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT},
                   'norm':{'pointSize':12-x, 'family':wx.FONTFAMILY_SWISS,
-                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
+                            'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT},
                   'med':{'pointSize':13-x, 'family':wx.FONTFAMILY_SWISS,
                             'style':wx.FONTSTYLE_NORMAL, 'weight':wx.FONTWEIGHT_LIGHT, 'face':"Helvetica"},
                   'large':{'pointSize':14-x, 'family':wx.FONTFAMILY_SWISS,
@@ -166,6 +166,9 @@ else:
 REC_PATH = os.path.join(PREF_PATH, "recfiles")
 HELP_DOC = os.path.join(PREF_PATH, "manuel_dutilisation_pyosynth.pdf")
 EXP_PATH = os.path.join(HOME_PATH, 'Documents', 'Pyo Synth Examples')
+LIB_PATH = os.path.join(PREF_PATH, "lib")
+USR_LIB_PATH = os.path.join(LIB_PATH, "usr")
+COM_LIB_PATH = os.path.join(LIB_PATH, "com")
 LAST_DIR = None
 
 if not os.path.exists(PREF_PATH):
@@ -174,6 +177,12 @@ if not os.path.exists(REC_PATH):
     os.mkdir(REC_PATH)
 if not os.path.exists(EXP_PATH):
     os.mkdir(EXP_PATH)
+if not os.path.exists(LIB_PATH):
+    os.mkdir(LIB_PATH)
+if not os.path.exists(USR_LIB_PATH):
+    os.mkdir(USR_LIB_PATH)
+if not os.path.exists(COM_LIB_PATH):
+    os.mkdir(COM_LIB_PATH)
 if not os.path.exists(os.path.join(EXP_PATH, 'Examples')):
     os.mkdir(os.path.join(EXP_PATH, 'Examples'))
 if not os.path.exists(os.path.join(EXP_PATH, 'Tutorials')):

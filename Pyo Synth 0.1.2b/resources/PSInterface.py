@@ -1734,6 +1734,9 @@ class WheelsBox(wx.Panel):
     def setDisplayDB(self, *args, **kwargs):
         pass
 
+    def stopMatchMode(self):
+        pass
+
     def setUnused(self, state):
         # disabled when VirtualKeyboard is in use
         if state:
@@ -1881,7 +1884,8 @@ class ParamBox(BoxBase):
         else:
             self.DRAGGED = False
             self.CLICKED = False
-            self.ReleaseMouse()
+            if self.HasCapture():
+                self.ReleaseMouse()
             BoxBase.Enable(self, False)
 
     def OnMove(self, evt):

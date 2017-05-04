@@ -71,18 +71,7 @@ class PSTextCtrl(wx.Control):
 
     def OnPaintMac(self, evt):
         dc = wx.PaintDC(self)
-        dc.DrawBitmap(self.left_bmp, 0, 0)
-
-        offset = self.left_bmp.GetSize()[0]
-        loops = self._textWidth + self._margin * 2
-        for i in range(loops):
-            dc.DrawBitmap(self.middle_bmp, offset + i, 0)
-
-        dc.DrawBitmap(self.right_bmp, offset + loops, 0)
-
-        dc.SetFont(self._font)
-        dc.SetTextForeground("#FFFFFF")
-        dc.DrawText(self._text, offset + self._margin, self._height / 5)
+        self.OnPaintGeneric(dc)
 
     def OnPaintLinux(self, evt):
         dc = wx.PaintDC(self)
@@ -90,6 +79,9 @@ class PSTextCtrl(wx.Control):
         w, h = self.GetSizeTuple()
         bmp = self.Parent.GetRegion(posx, posy, w, h)
         dc.DrawBitmap(bmp, 0, 0)
+        self.OnPaintGeneric(dc)
+
+    def OnPaintGeneric(self, dc):
         dc.DrawBitmap(self.left_bmp, 0, 0)
         
         offset = self.left_bmp.GetSize()[0]
