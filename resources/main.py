@@ -245,9 +245,11 @@ class PyoSynth(wx.Frame):
         self.menu_panel._releaseKnob.Bind(PSControls.EVT_TOGGLE_CONTROL, self._onToggleADSRMidiControlByEvent)
 
         self._setPreferences()
-        # hack to get all widgets to refresh and draw their parents background
-        wx.CallLater(100, self.Refresh)
-        wx.CallLater(150, self.Refresh)
+
+        if not PSConfig.USE_TRANSPARENCY:
+            # hack to get all widgets to refresh and draw their parents background
+            wx.CallLater(100, self.Refresh)
+            wx.CallLater(150, self.Refresh)
     #end __init__
 
 ##### --------------------

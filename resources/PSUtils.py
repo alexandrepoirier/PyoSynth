@@ -30,7 +30,7 @@ import pickle
 import time
 import PSInterface
 import math
-import os.path
+import os
 
 if PSConfig.USE_PYO64:
     from pyo64 import midiToHz, pa_get_default_output, pa_get_default_input, pm_get_default_output, pm_get_default_input
@@ -168,3 +168,15 @@ def getServerPreferences():
         if pref['midi_input'] not in pm_get_input_devices()[1]:
             pref['midi_input'] = pm_get_default_input()
         return (HAS_PREFS, pref)
+
+def takeScreenshot():
+    if sys.platform == 'darwin':
+        path = os.path.join(os.path.expanduser('~'), 'temp.png')
+        os.system('screencapture -x -t png %s'%path)
+        bmp = wx.Bitmap(path, wx.BITMAP_TYPE_PNG)
+        os.remove(path)
+        return bmp
+    elif sys.platform == 'linux2':
+        pass
+    elif sys.platform -- 'win32':
+        pass

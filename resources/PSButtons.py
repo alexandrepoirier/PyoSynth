@@ -470,6 +470,7 @@ class PSRectangleButton(wx.Control):
         self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
         self._brush_colours = ["#3d3d3d","#202020"]
         self._pen_colours = ["#3d3d3d","#f0f4d7"]
+        self._text_colour = "#f0f4d7"
         self._clicked = 0
         self._hover = 0
         self.setText(text)
@@ -488,7 +489,7 @@ class PSRectangleButton(wx.Control):
         dc.SetBrush(wx.Brush(self._brush_colours[self._clicked]))
         dc.DrawRectangle(0,0,w,h)
         
-        dc.SetTextForeground("#f0f4d7")
+        dc.SetTextForeground(self._text_colour)
         dc.SetFont(self._font)
         tw,th = dc.GetTextExtent(self._text)
         dc.DrawText(self._text, (w-tw)/2-1, (h-th)/2+2)
@@ -531,6 +532,18 @@ class PSRectangleButton(wx.Control):
         if h < self._minHeight: h = self._minHeight
         self.SetSize((w,h))
         wx.CallAfter(self.Refresh)
+
+    def setTextColour(self, colour):
+        self._text_colour = colour
+        self._pen_colours[1] = colour
+
+    def setColours(self, colours):
+        assert isinstance(colours, list), "PSRectangleButton.setColours: colours argument must be a list of two colours"
+        self._brush_colours = colours
+        self._pen_colours[0] = colours[0]
+
+    def setFaceName(self, name):
+        self._font.SetFaceName(name)
         
 class PSClickButton(PSButtonBase):
     def __init__(self, parent, pos):
@@ -562,3 +575,17 @@ class PSClickButton(PSButtonBase):
             dc.DrawText("On", 14, 9 - PSConfig.Y_OFFSET)
         else:
             dc.DrawText("Off", 14, 9 - PSConfig.Y_OFFSET)
+
+class PSSettingsButton(PSButtonBase):
+    def __init__(self, parent, pos):
+        PSButtonBase.__init__(self, parent, pos, (29, 20))
+
+        self.normal = BPY.settings_icon.GetBitmap()
+        self.hover = BPY.settings_icon_hover.GetBitmap()
+        self.clicked = self.hover
+
+    def disable(self):
+        pass
+
+    def enable(self):
+        pass

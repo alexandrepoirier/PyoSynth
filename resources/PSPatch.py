@@ -27,9 +27,10 @@ import PSConfig
 class PSPatch(object):
     _ext = '.pspatch'
     _usr_patch_mods_file = 'user.psmods'
+    _data_model = {'NAME':"",'AUTHOR':"",'CREATION_DATE':"",'VERSION':-1,'TYPE':"",'ID':-1,'MODIFIED':False,'PACKAGE':""}
 
     def __init__(self, filepath, metadata=None):
-        self._METADATA = {'NAME':"",'AUTHOR':"",'CREATION_DATE':"",'VERSION':-1,'TYPE':"",'ID':-1,'MODIFIED':False}
+        self._METADATA = dict(PSPatch._data_model)
         self._BASEDIR = u""
         self._SCRIPT = ""
         self._MOD_SCRIPT = ""
