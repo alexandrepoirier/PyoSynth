@@ -28,19 +28,23 @@ class PSScrollBar(wx.Panel):
     _bar_width = 5
     _click_y_inc = 50.
 
-    def __init__(self, parent, id, pos, height, virtual_height, bg_colour="#FFFFFF", bar_colour="#7F7F7F"):
+    def __init__(self, parent, id, pos, height, virtual_height, bg_colour="#FFFFFF", bar_colour="#7F7F7F",
+                 hovered_bar_colour="#555555"):
         wx.Panel.__init__(self, parent, id, pos, (PSScrollBar._width, height))
         self.SetBackgroundColour(bg_colour)
         self._scrollbar_colour = bar_colour
+        self._scrollbar_colour_hovered = hovered_bar_colour
         self._virtual_height = 0.
         self._norm_value = 0.
         self._click_pos_y = 0
         self._CLICKED = False
+        self._HOVERED = False
         self.setVirtualHeight(virtual_height)
 
         self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
         self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
         self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.OnMouseCaptureLost)
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
@@ -49,8 +53,12 @@ class PSScrollBar(wx.Panel):
             return
         else:
             dc = wx.PaintDC(self)
-            dc.SetBrush(wx.Brush(self._scrollbar_colour))
-            dc.SetPen(wx.Pen(self._scrollbar_colour, 1))
+            if self._HOVERED or self._CLICKED:
+                dc.SetBrush(wx.Brush(self._scrollbar_colour_hovered))
+                dc.SetPen(wx.Pen(self._scrollbar_colour_hovered, 1))
+            else:
+                dc.SetBrush(wx.Brush(self._scrollbar_colour))
+                dc.SetPen(wx.Pen(self._scrollbar_colour, 1))
             dc.DrawRoundedRectangle(3, self._getScrollbarPos(), PSScrollBar._bar_width, self._getScrollbarHeight(), 2)
 
     def OnMouseDown(self, evt):
@@ -80,9 +88,24 @@ class PSScrollBar(wx.Panel):
             self._click_pos_y = wx.GetMousePosition()[1]
             self._sendScrollbarEvent()
             self.Refresh()
+        else:
+            if self._getMouseRelativePosScrollbar() == 0:
+                if not self._HOVERED:
+                    self._HOVERED = True
+                    self.Refresh()
+            else:
+                if self._HOVERED:
+                    self._HOVERED = False
+                    self.Refresh()
+
+    def OnMouseLeave(self, evt):
+        self._HOVERED = False
+        self._CLICKED = False
+        self.Refresh()
 
     def OnMouseCaptureLost(self, evt):
         self._CLICKED = False
+        self._HOVERED = False
         self._click_pos_y = 0
 
     def SetHeight(self, height):
@@ -145,6 +168,7 @@ class PSScrollBar(wx.Panel):
         else:
             self._scrollbar_height = -1
             self._scrollbar_travel = -1
+        self._sendScrollbarEvent()
         self.Refresh()
 
     def setNormalValue(self, value):
@@ -179,7 +203,6 @@ class PSScrolledWindow(wx.Panel):
 
     def OnScrollMotion(self, evt):
         self.SetVirtualPosition(-evt.GetAbsolutePixelPosition())
-        wx.PostEvent(self, evt)
 
     def OnMouseWheel(self, evt):
         if self.GetSize()[1] - self._virtual_height < 0:
@@ -259,7 +282,7 @@ class PatchesList(PSScrolledWindow):
         if self._type_filtered_elem_list:
             if self._text_filtered_elem_list:
                 for elem in self._type_filtered_elem_list:
-                    if self._filters_text in elem.getTitle():
+                    if self._filters_text in elem.getName():
                         self._displayed_elem_list.append(elem)
             else:
                 self._displayed_elem_list = list(self._type_filtered_elem_list)
@@ -489,7 +512,6 @@ class PSDropDownMenuItem(wx.Panel):
         self._text = wx.StaticText(self, -1, text, self._getTextPos(text))
         self._text.Bind(wx.EVT_LEFT_UP, self.ChildRedirectEvent)
         self._text.Bind(wx.EVT_ENTER_WINDOW, self.ChildRedirectEvent)
-        self._text.Bind(wx.EVT_LEAVE_WINDOW, self.ChildRedirectEvent)
         self.SetAlign(align)
 
         self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
@@ -623,13 +645,6 @@ class PSDropDownMenu(wx.Frame):
         self._border_colour = colour
         self.Refresh()
 
-    def OnHoverMenuElement(self, evt):
-        print 'hover'
-        evt.GetEvenObject().SetBackgroundColour(self._hover_element_colour)
-
-    def OnLeaveMenuElement(self, evt):
-        evt.GetEvenObject().SetBackgroundColour(self._background_colour)
-
     def _setSize(self):
         h = len(self._entries) * PSDropDownMenu._entry_height + 2
         w = self._entries[0].GetSize()[0] + 2
@@ -656,36 +671,339 @@ class PSDropDownMenu(wx.Frame):
 
 
 
-if __name__ == "__main__":
-    app = wx.App()
+myEVT_SEARCH = wx.NewEventType()
+EVT_SEARCH = wx.PyEventBinder(myEVT_SEARCH, 1)
 
-    # test numbers
-    # 0 = scroll bar
-    # 1 = scrolled window
-    # 2 = patches list
-    test = 2
+class PSSearchEvent(wx.PyCommandEvent):
+    def __init__(self, evtType, id):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self._text = ""
+
+    def GetText(self):
+        return self._text
+
+
+class PSSearchCtrl(wx.Panel):
+    _height = 25
+    _x_btn_size = 11
+
+    def __init__(self, parent, id, pos, size):
+        w,h = size[0], PSSearchCtrl._height
+        wx.Panel.__init__(self, parent, id, pos, (w,h))
+
+        self._bg_colour = "#434343"
+        self._fg_colour = "#e9e9e9"
+        self._fg_inactive_colour = "#8d8d8d"
+        self._hover_colour = "#222222"
+        self._click_colour = "#000000"
+        self._HOVER_BTN = False
+        self._CLICK_BTN = False
+
+        self.SetBackgroundColour(self._bg_colour)
+        margin = (PSSearchCtrl._height - PSSearchCtrl._x_btn_size) / 2 * 3
+        self._text_ctrl = wx.TextCtrl(self, -1, "", (4,4), (w-PSSearchCtrl._x_btn_size-margin, -1),
+                                      style=wx.TE_PROCESS_ENTER|wx.BORDER_NONE)
+        self._text_ctrl.SetBackgroundColour(self._bg_colour)
+        self._text_ctrl.SetValue("Search")
+        self._text_ctrl.SetForegroundColour(self._fg_inactive_colour)
+        self._text_ctrl.SetFont(wx.Font(**PSConfig.FONTS['light']['small']))
+
+        self._timer = wx.Timer(self)
+        self._timeout = 450
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_MOTION, self.OnMotion)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
+        self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
+        self._text_ctrl.Bind(wx.EVT_TEXT, self.OnTyping)
+        self._text_ctrl.Bind(wx.EVT_TEXT_ENTER, self.OnEnter)
+        self._text_ctrl.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self._text_ctrl.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+        self.Bind(wx.EVT_TIMER, self.OnTimerEnd)
+
+    def OnPaint(self, evt):
+        w,h = self.GetSize()
+        dc = wx.PaintDC(self)
+        if self._CLICK_BTN:
+            dc.SetPen(wx.Pen(self._click_colour, 1))
+        elif self._HOVER_BTN:
+            dc.SetPen(wx.Pen(self._hover_colour, 1))
+        else:
+            dc.SetPen(wx.Pen(self._fg_colour, 1))
+        size = PSSearchCtrl._x_btn_size
+        margin = (PSSearchCtrl._height - size) / 2
+        dc.DrawLine(w-margin-size, margin, w-margin, h-margin)
+        dc.DrawLine(w-margin-size, h-margin, w-margin, margin)
+
+    def OnMotion(self, evt):
+        if self._getMouseOverClearButton():
+            if not self._HOVER_BTN:
+                self._HOVER_BTN = True
+                self.Refresh()
+        else:
+            if self._HOVER_BTN:
+                self._HOVER_BTN = False
+                self.Refresh()
+
+    def OnMouseDown(self, evt):
+        if self._HOVER_BTN:
+            self._text_ctrl.Clear()
+            self._sendSearchEvent()
+            self._CLICK_BTN = True
+            self.Refresh()
+
+    def OnMouseUp(self, evt):
+        self._CLICK_BTN = False
+        self.Refresh()
+
+    def OnMouseLeave(self, evt):
+        self._CLICK_BTN = False
+        self._HOVER_BTN = False
+        self.Refresh()
+
+    def OnSetFocus(self, evt):
+        if self._text_ctrl.GetValue() == "Search":
+            self._text_ctrl.Clear()
+            self._text_ctrl.SetForegroundColour(self._fg_colour)
+
+    def OnKillFocus(self, evt):
+        if self._text_ctrl.GetValue() == "":
+            self._text_ctrl.SetValue("Search")
+            self._text_ctrl.SetForegroundColour(self._fg_inactive_colour)
+
+    def OnTyping(self, evt):
+        self._timer.Start(self._timeout)
+
+    def OnTimerEnd(self, evt):
+        self.OnEnter(evt)
+
+    def OnEnter(self, evt):
+        if self._timer.IsRunning():
+            self._timer.Stop()
+        if self._text_ctrl.GetValue() != "Search":
+            self._sendSearchEvent()
+
+    def SetSize(self, size):
+        wx.Panel.SetSize(self, (size[0], PSSearchCtrl._height))
+
+    def _getMouseOverClearButton(self):
+        mouse_x, mouse_y = self.ScreenToClient(wx.GetMousePosition())
+        w, h = self.GetSize()
+        margin = (PSSearchCtrl._height - PSSearchCtrl._x_btn_size) / 2
+        xmin = w - margin - PSSearchCtrl._x_btn_size
+        xmax = w - margin
+        ymin = margin
+        ymax = h - margin
+        if mouse_x > xmin and mouse_x <= xmax:
+            if mouse_y > ymin and mouse_y <= ymax:
+                return True
+        return False
+
+    def _sendSearchEvent(self):
+        event = PSSearchEvent(myEVT_SEARCH, self.GetId())
+        event._text = str(self._text_ctrl.GetValue())
+        self.GetEventHandler().ProcessEvent(event)
+
+
+myEVT_TAG = wx.NewEventType()
+EVT_TAG = wx.PyEventBinder(myEVT_TAG, 1)
+
+class PSTagEvent(wx.PyCommandEvent):
+    def __init__(self, evtType, id):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self._state = False
+        self._text = ""
+
+    def GetState(self):
+        return self._state
+
+    def GetText(self):
+        return self._text
+
+
+class PSTag(wx.Control):
+    _height = 20
+    _x_margin = 10
+
+    def __init__(self, parent, id, pos, text):
+        wx.Control.__init__(self, parent, id, pos)
+        self._text = text
+        self._tag_colour = "#434343"
+        self._tag_clicked_colour = "#323232"
+        self._text_colour = "#e9e9e9"
+        if text in PATCHES_TYPES_COLOURS:
+            self._text_hover_colour = PATCHES_TYPES_COLOURS[text][0]
+        else:
+            self._text_hover_colour = PATCHES_TYPES_COLOURS['default'][1]
+        self._font = wx.Font(**PSConfig.FONTS['light']['small'])
+
+        self._HOVER = False
+        self._CLICKED = False
+        self._ENABLED = False
+
+        self.SetBackgroundColour(parent.GetBackgroundColour())
+        self.SetSize(self._getSizeFromText())
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_ENTER_WINDOW, self.OnMouseEnter)
+        self.Bind(wx.EVT_LEAVE_WINDOW, self.OnMouseLeave)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
+        self.Bind(wx.EVT_LEFT_UP, self.OnMouseUp)
+
+    def OnPaint(self, evt):
+        w,h = self.GetSize()
+        dc = wx.PaintDC(self)
+
+        if self._CLICKED:
+            dc.SetBrush(wx.Brush(self._tag_clicked_colour))
+        else:
+            dc.SetBrush(wx.Brush(self._tag_colour))
+
+        if self._HOVER:
+            dc.SetPen(wx.Pen(self._tag_clicked_colour, 1))
+        else:
+            dc.SetPen(wx.Pen(self._tag_colour, 1))
+        dc.DrawRoundedRectangle(0, 0, w, h, PSTag._x_margin)
+
+        if self._HOVER or self._ENABLED:
+            dc.SetTextForeground(self._text_hover_colour)
+        else:
+            dc.SetTextForeground(self._text_colour)
+
+        tw, th = dc.GetTextExtent(self._text)
+        dc.SetFont(self._font)
+        dc.DrawText(self._text, PSTag._x_margin, (h-th)/2+1)
+
+    def OnMouseEnter(self, evt):
+        self._HOVER = True
+        self.Refresh()
+
+    def OnMouseLeave(self, evt):
+        self._HOVER = False
+        self._CLICKED = False
+        self.Refresh()
+
+    def OnMouseDown(self, evt):
+        self._CLICKED = True
+        self.Refresh()
+
+    def OnMouseUp(self, evt):
+        self._CLICKED = False
+        self._ENABLED = not self._ENABLED
+
+        event = PSTagEvent(myEVT_TAG, self.GetId())
+        event._state = self._ENABLED
+        event._text = self._text
+        self.GetEventHandler().ProcessEvent(event)
+
+        self.Refresh()
+
+    def _getSizeFromText(self):
+        dc = wx.ClientDC(self)
+        dc.SetFont(self._font)
+        w,h = dc.GetTextExtent(self._text)
+        w += PSTag._x_margin*2
+        return (w, PSTag._height)
+
+
+myEVT_FILTERS_CHANGED = wx.NewEventType()
+EVT_FILTERS_CHANGED = wx.PyEventBinder(myEVT_FILTERS_CHANGED, 1)
+
+class PSFilterEvent(wx.PyCommandEvent):
+    def __init__(self, evtType, id):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self._filters_list = []
+
+    def GetFilters(self):
+        return self._filters_list
+
+
+class PSFilters(wx.Panel):
+    _min_margin = 7
+
+    def __init__(self, parent, id, pos, size):
+        wx.Panel.__init__(self, parent, id, pos, size)
+        wx.Panel.SetBackgroundColour(self, parent.GetBackgroundColour())
+        self._tags_list = []
+        self._active_filters = []
+
+    def OnTagPressed(self, evt):
+        if evt.GetState():
+            self._active_filters.append(evt.GetText())
+        else:
+            self._active_filters.remove(evt.GetText())
+
+        event = PSFilterEvent(myEVT_FILTERS_CHANGED, self.GetId())
+        event._filters_list = self._active_filters
+        self.GetEventHandler().ProcessEvent(event)
+
+    def SetSize(self, size):
+        wx.Panel.SetSize(self, size)
+        self._rearrangeTags()
+
+    def SetBackgroundColour(self, colour):
+        wx.Panel.SetBackgroundColour(self, colour)
+        for obj in self._tags_list:
+            obj.SetBackgroundColour(colour)
+
+    def addTag(self, text):
+        self._tags_list.append(PSTag(self, -1, (0,0), text))
+        self._tags_list[-1].Bind(EVT_TAG, self.OnTagPressed)
+        self._rearrangeTags()
+
+    def addTags(self, text_list):
+        for text in text_list:
+            self._tags_list.append(PSTag(self, -1, (0,0), text))
+            self._tags_list[-1].Bind(EVT_TAG, self.OnTagPressed)
+        self._rearrangeTags()
+
+    def _rearrangeTags(self):
+        w,h = self.GetSize()
+
+        elems_per_row = [0]
+        pixels_per_row = [0]
+        total_width = PSFilters._min_margin
+        for obj in self._tags_list:
+            ow, oh = obj.GetSize()
+            if total_width + ow + PSFilters._min_margin < w:
+                elems_per_row[-1] += 1
+                total_width += (ow + PSFilters._min_margin)
+            else:
+                pixels_per_row[-1] = total_width
+                pixels_per_row.append(0)
+                elems_per_row.append(1)
+                total_width = PSFilters._min_margin + ow
+        pixels_per_row[-1] = total_width
+        i = 0
+        for j, row in enumerate(elems_per_row):
+            x = (w - pixels_per_row[j]) / 2 + 1
+            y = j * (PSFilters._min_margin + PSTag._height) + PSFilters._min_margin
+            for index in range(row):
+                self._tags_list[i].SetPosition((x, y))
+                x += self._tags_list[i].GetSize()[0] + PSFilters._min_margin
+                i += 1
+
+
+
+
+if __name__ == "__main__":
+    app = wx.App(False)
+
+    test = 0
 
     if test == 0:
-        frame = wx.Frame(None, -1, "Scroll Bar Test", (50,50), (100, 322))
-        basepanel = wx.Panel(frame, -1, (0,0), (100,300))
-        basepanel.SetBackgroundColour("#FFFFFF")
-        sb = PSScrollBar(basepanel, -1, (0,0), 300, 500, bg_colour="#000000")
-
-        def printPosX(evt):
-            print evt.GetAbsolutePixelPosition()
-        basepanel.Bind(EVT_SCROLL_MOTION, printPosX)
-    elif test == 1:
-        frame = wx.Frame(None, -1, "Scrolled Window Test", (50, 50), (200, 422))
-        scroll_win = PSScrolledWindow(frame, -1, (0,0), (200,400))
-
-        def OnResize(evt):
-            w,h = frame.GetSize()
-            scroll_win.SetSize((w,h-22))
-        frame.Bind(wx.EVT_SIZE, OnResize)
-    elif test == 2:
-        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (330, 522))
-        win = PatchesList(frame, -1, (0, 0), (330, 500))
-        win.SetBackgroundColour("#12181d")
+        width = 332
+        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (width, 522))
+        basepanel = wx.Panel(frame, -1, (0,0), (width,500))
+        basepanel.SetBackgroundColour("#12181d")
+        search = PSSearchCtrl(basepanel, -1, (2, 2), (width-4, -1))
+        y = PSSearchCtrl._height+2
+        filters = PSFilters(basepanel, -1, (0,y), (width, 60))
+        filters.addTags([tag for tag in PATCHES_TYPES_COLOURS.iterkeys() if tag != 'default'])
+        y += filters.GetSize()[1]
+        patches = PatchesList(basepanel, -1, (0, y+2), (width-2, 500-y-2))
+        patches.SetBackgroundColour("#12181d")
         data1 = {'TYPE':'Analog','NAME':'Analogica','VERSION':1,'STATE':0,'PACKAGE':'Default library','ID':12,
                  'MODIFIED':False, 'USER_PATCH':True}
         data2 = {'TYPE':'Digital','NAME':'Digital Wonders','VERSION':2, 'STATE':1,'PACKAGE':'Community library','ID':14,
@@ -712,15 +1030,52 @@ if __name__ == "__main__":
             datas.append(data6)
             datas.append(data7)
             datas.append(data8)
-        win.addElements(datas)
+        patches.addElements(datas)
         #win.setTypeFilters(['Analog','Granular','Digital'])
         #win.setTextFilter('Synth')
         #win.applyFilters()
 
         def OnResize(evt):
             w,h = frame.GetSize()
-            win.SetSize((w,h-22))
+            frame.SetSize((width,h))
+            basepanel.SetSize((width, h))
+            patches.SetSize((width-2,h-22-y))
+            search.SetSize((width-4,-1))
+            filters.SetSize((width, h))
+
         frame.Bind(wx.EVT_SIZE, OnResize)
+
+        def OnSearch(evt):
+            patches.setTextFilter(evt.GetText())
+            patches.applyFilters()
+        basepanel.Bind(EVT_SEARCH, OnSearch)
+
+        def OnFiltersChanged(evt):
+            patches.setTypeFilters(evt.GetFilters())
+            patches.applyFilters()
+        basepanel.Bind(EVT_FILTERS_CHANGED, OnFiltersChanged)
+
+    elif test == 1:
+        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (332, 522))
+        basepanel = wx.Panel(frame, -1, (0, 0), (330, 500))
+        basepanel.SetBackgroundColour("#12181d")
+        tag = PSTag(basepanel, -1, (10,10), "Booboo")
+    elif test == 2:
+        width = 450
+        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (332, width))
+        basepanel = wx.Panel(frame, -1, (0, 0), (332, width))
+        basepanel.SetBackgroundColour("#12181d")
+        tags = PSFilters(basepanel, -1, (2,2), (328, width))
+        tags.addTags([tag for tag in PATCHES_TYPES_COLOURS.iterkeys() if tag != 'default'])
+
+        def OnResize(evt):
+            w,h = frame.GetSize()
+            frame.SetSize((width,h))
+            basepanel.SetSize((width,h-22))
+            tags.SetSize((width,h-22))
+        frame.Bind(wx.EVT_SIZE, OnResize)
+
+
 
     frame.Show()
     app.MainLoop()
