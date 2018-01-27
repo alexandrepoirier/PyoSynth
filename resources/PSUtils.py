@@ -180,3 +180,18 @@ def takeScreenshot():
         pass
     elif sys.platform -- 'win32':
         pass
+
+def convertRGBToHex(r, g, b):
+    return "".join(map(chr, (r,g,b))).encode('hex')
+
+def convertHexToRGB(colour):
+    colour = colour.lower()
+    if colour[0] == '#':
+        colour = colour[1:]
+    return tuple(ord(c) for c in colour.decode('hex'))
+
+def higherOddNumber(x):
+    return x+1 if x&1 == 0 else x
+
+def lowerOddNumber(x):
+    return x-1 if x&1 == 0 else x

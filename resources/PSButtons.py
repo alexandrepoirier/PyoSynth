@@ -589,3 +589,17 @@ class PSSettingsButton(PSButtonBase):
 
     def enable(self):
         pass
+
+class PSUpdateButton(PSButtonBase):
+    def __init__(self, parent, pos):
+        PSButtonBase.__init__(self, parent, pos, (21, 21))
+
+        self.normal = BPY.update_btn.GetBitmap()
+        self.hover = BPY.update_btn_hover.GetBitmap()
+        self.clicked = self.hover
+
+    def disable(self):
+        pass
+
+    def enable(self):
+        pass

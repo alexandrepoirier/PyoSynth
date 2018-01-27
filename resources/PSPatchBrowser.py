@@ -3,7 +3,6 @@ from wx.lib.embeddedimage import PyEmbeddedImage
 import math
 import PSConfig
 import PSButtons
-import PSUtils
 
 myEVT_SCROLL_MOTION = wx.NewEventType()
 EVT_SCROLL_MOTION = wx.PyEventBinder(myEVT_SCROLL_MOTION, 1)
@@ -230,6 +229,8 @@ class PSScrolledWindow(wx.Panel):
             self._virtual_panel.SetPosition((x, value))
 
     def setVirtualHeight(self, height):
+        if height < self.GetSize()[1]:
+            height = self.GetSize()[1]-1
         self._virtual_height = height
         self._virtual_panel.SetSize((self.GetSize()[0]-PSScrollBar._width, height))
         self._scroll_bar.setVirtualHeight(height)
@@ -302,7 +303,7 @@ class PatchesList(PSScrolledWindow):
 
     def _setElementsPositions(self):
         for i, elem in enumerate(self._displayed_elem_list):
-            y = (PatchElem._size[1] + self._margin_y) * i + self._margin_y
+            y = (PatchElem._size[1] + self._margin_y) * i
             elem.SetPosition((self._margin_x, y))
 
     def _getDisplayedListHeight(self):
@@ -357,6 +358,7 @@ PATCHES_TYPES_COLOURS = {'Analog':("#ffde00", "#ffa902", "#ffe744"),
 PATCH_ELEM_DATA_MODEL = {'TYPE':str,'NAME':str,'ID':int,'STATE':int,'VERSION':int,'PACKAGE':str,'MODIFIED':bool,
                          'USER_PATCH':bool}
 PATCH_ELEM_STATE_MAP = {0:'Download',1:'Load',2:'Update'}
+
 
 class PatchElem(wx.Panel):
     _size = (315, 108)
@@ -497,7 +499,7 @@ class PatchElem(wx.Panel):
         return self._data['NAME']
 
 
-class PSDropDownMenuItem(wx.Panel):
+class PSListCtrlItem(wx.Panel):
     _x_margin = 10
     _y_margin = 10
 
@@ -510,6 +512,7 @@ class PSDropDownMenuItem(wx.Panel):
         self._align = 'left'
 
         self._text = wx.StaticText(self, -1, text, self._getTextPos(text))
+        self._text.SetFont(wx.Font(**PSConfig.FONTS['light']['norm']))
         self._text.Bind(wx.EVT_LEFT_UP, self.ChildRedirectEvent)
         self._text.Bind(wx.EVT_ENTER_WINDOW, self.ChildRedirectEvent)
         self.SetAlign(align)
@@ -561,8 +564,8 @@ class PSDropDownMenuItem(wx.Panel):
     def _getMinSize(self, text):
         dc = wx.ClientDC(self)
         w, h = dc.GetTextExtent(text)
-        w += PSDropDownMenuItem._x_margin*2
-        h += PSDropDownMenuItem._y_margin*2
+        w += PSListCtrlItem._x_margin * 2
+        h += PSListCtrlItem._y_margin * 2
         return (w,h)
 
     def _getTextPos(self, text):
@@ -572,56 +575,122 @@ class PSDropDownMenuItem(wx.Panel):
         y = (h-th)/2
 
         if self._align == 'left':
-            return (PSDropDownMenuItem._x_margin, y)
+            return (PSListCtrlItem._x_margin, y)
         elif self._align == 'center':
             return ((w-tw)/2, y)
         elif self._align == 'right':
-            return (w-tw-PSDropDownMenuItem._x_margin, y)
+            return (w - tw - PSListCtrlItem._x_margin, y)
 
 
-class PSDropDownMenu(wx.Frame):
-    _size = (250, 120)
+class PSListCtrl(wx.Panel):
+    _entry_height = 25
+
+    def __init__(self, parent, id, pos, size):
+        wx.Panel.__init__(self, parent, id, pos, size)
+        self._background_colour = "#434343"
+        self._hover_element_colour = "#686868"
+        self._border_colour = "#848484"
+        self._border_size = 0
+        self._align = 'left'
+        self.SetBackgroundColour(self._background_colour)
+
+        self._items = []
+
+    def OnPaint(self, evt):
+        if self._border_size > 0:
+            w, h = self.GetSize()
+            dc = wx.PaintDC(self)
+            dc.SetPen(wx.Pen(self._border_colour, 1))
+            dc.DrawLines([(0, 0), (w - 1, 0), (w - 1, h - 1), (0, h - 1), (0, 0)])
+
+    def SetBorderColour(self, colour):
+        self._border_colour = colour
+        self.Refresh()
+
+    def SetBorderSize(self, size):
+        if size > 0:
+            self._border_size = size
+            self.Bind(wx.EVT_PAINT, self.OnPaint)
+        elif size == 0 and self._border_size > 0:
+            self._border_size = 0
+            self.Unbind(wx.EVT_PAINT, self.OnPaint)
+        self.Refresh()
+
+    def SetAlign(self, align):
+        align = align.lower()
+        assert align in ('left', 'center', 'right'), "PSDropDownMenuItem.SetAlgin: align attribute must be either\
+                                                              'left', 'center' or 'right'"
+        self._align = align
+
+    def _setSize(self):
+        w,h = self.GetSize()
+        new_h = len(self._items) * PSDropDownMenu._entry_height + self._border_size * 2
+        new_w = self._items[0].GetSize()[0] + self._border_size * 2
+        if new_w > w:
+            self.SetSize((new_w, new_h))
+        else:
+            self.SetSize((w,new_h))
+
+    def _buildList(self):
+        widest = 0
+        for i, obj in enumerate(self._items):
+            y = PSDropDownMenu._entry_height * i + self._border_size
+            obj.SetPosition((self._border_size,y))
+            if i % 2:
+                obj.SetNormBackgroundColour("#22272b")
+                obj.SetHoverBackgroundColour("#37424b")
+            else:
+                obj.SetNormBackgroundColour("#121416")
+                obj.SetHoverBackgroundColour("#37424b")
+            obj.SetTextColour("#e9e9e9")
+            if obj.GetSize()[0] > widest:
+                widest = obj.GetSize()[0]
+        if widest < self.GetSize()[0]:
+            widest  = self.GetSize()[0]
+        for obj in self._items:
+            obj.SetSize((widest-self._border_size * 2, PSDropDownMenu._entry_height))
+        self._setSize()
+
+    def addItem(self, text):
+        self._items.append(PSListCtrlItem(self, text, (0,0), self._align))
+        self._buildList()
+        return self._items[-1]
+
+    def addItems(self, text_list):
+        for text in text_list:
+            self._items.append(PSListCtrlItem(self, text, (0,0), self._align))
+        self._buildList()
+        return self._items[-len(text_list):]
+
+
+class PSDropDownMenu(wx.Frame, PSListCtrl):
+    _size = (50, 120)
     _entry_height = 25
 
     def __init__(self, parent, state=0, modified=False, is_user_patch=False):
         wx.Frame.__init__(self, parent, id=-1, size=PSDropDownMenu._size,
                           style=wx.NO_BORDER | wx.FRAME_FLOAT_ON_PARENT)
-        self._panel = wx.Panel(self, -1, (0,0), self.GetSize())
+        self._list_ctrl = PSListCtrl(self, -1, (0,0), self.GetSize())
+        self._list_ctrl.SetAlign('right')
+        self._list_ctrl.SetBorderSize(2)
 
-        self._background_colour = "#434343"
-        self._hover_element_colour = "#686868"
-        self._border_colour = "#848484"
-        self._font = wx.Font(**PSConfig.FONTS['light']['norm'])
-
-        self._panel.SetBackgroundColour(self._background_colour)
-
-        self._entries = []
         if is_user_patch:
-            self._entries.append(PSDropDownMenuItem(self._panel, 'Edit', (0,0), 'right'))
-            self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnEditScript)
-            self._entries.append(PSDropDownMenuItem(self._panel, 'Edit Metadata', (0,0), 'right'))
-            self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnEditMetadata)
-            self._entries.append(PSDropDownMenuItem(self._panel, 'Submit', (0,0), 'right'))
-            self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnSubmitScript)
+            entries = ['Edit', 'Edit Metadata', 'Submit']
+            items = self._list_ctrl.addItems(entries)
+            items[0].Bind(wx.EVT_LEFT_UP, self.OnEditScript)
+            items[1].Bind(wx.EVT_LEFT_UP, self.OnEditMetadata)
+            items[2].Bind(wx.EVT_LEFT_UP, self.OnSubmitScript)
         else:
             if state in [1,2]:
-                self._entries.append(PSDropDownMenuItem(self._panel, 'Edit', (0,0), 'right'))
-                self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnEditScript)
+                item = self._list_ctrl.addItem('Edit')
+                item.Bind(wx.EVT_LEFT_UP, self.OnEditScript)
             if modified:
-                self._entries.append(PSDropDownMenuItem(self._panel, 'Revert to original', (0,0), 'right'))
-                self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnRevertToOriginal)
-        self._entries.append(PSDropDownMenuItem(self._panel, 'Delete', (0,0), 'right'))
-        self._entries[-1].Bind(wx.EVT_LEFT_UP, self.OnDeletePatch)
+                item = self._list_ctrl.addItem('Revert to original')
+                item.Bind(wx.EVT_LEFT_UP, self.OnRevertToOriginal)
+        item = self._list_ctrl.addItem('Delete')
+        item.Bind(wx.EVT_LEFT_UP, self.OnDeletePatch)
 
-        self._buildList()
-
-        self._panel.Bind(wx.EVT_PAINT, self.OnPaint)
-
-    def OnPaint(self, evt):
-        w,h = self.GetSize()
-        dc = wx.PaintDC(self._panel)
-        dc.SetPen(wx.Pen(self._border_colour, 1))
-        dc.DrawLines([(0, 0), (w - 1, 0), (w - 1, h - 1), (0, h - 1), (0, 0)])
+        self.SetSize(self._list_ctrl.GetSize())
 
     def OnEditScript(self, evt):
         print 'Edit script'
@@ -637,38 +706,6 @@ class PSDropDownMenu(wx.Frame):
 
     def OnDeletePatch(self, evt):
         print 'Delete patch'
-
-    def SetBackgroundColour(self, colour):
-        self._panel.SetBackgroundColour(colour)
-
-    def SetBorderColour(self, colour):
-        self._border_colour = colour
-        self.Refresh()
-
-    def _setSize(self):
-        h = len(self._entries) * PSDropDownMenu._entry_height + 2
-        w = self._entries[0].GetSize()[0] + 2
-        self.SetSize((w,h))
-        self._panel.SetSize((w,h))
-
-    def _buildList(self):
-        widest = 0
-        for i, obj in enumerate(self._entries):
-            y = PSDropDownMenu._entry_height*i+1
-            obj.SetPosition((1,y))
-            if i % 2:
-                obj.SetNormBackgroundColour("#22272b")
-                obj.SetHoverBackgroundColour("#37424b")
-            else:
-                obj.SetNormBackgroundColour("#121416")
-                obj.SetHoverBackgroundColour("#37424b")
-            obj.SetTextColour("#e9e9e9")
-            if obj.GetSize()[0] > widest:
-                widest = obj.GetSize()[0]
-        for obj in self._entries:
-            obj.SetSize((widest, PSDropDownMenu._entry_height))
-        self._setSize()
-
 
 
 myEVT_SEARCH = wx.NewEventType()
@@ -748,10 +785,11 @@ class PSSearchCtrl(wx.Panel):
 
     def OnMouseDown(self, evt):
         if self._HOVER_BTN:
-            self._text_ctrl.Clear()
-            self._sendSearchEvent()
-            self._CLICK_BTN = True
-            self.Refresh()
+            if self._text_ctrl.GetValue() != "Search":
+                self._text_ctrl.Clear()
+                self._sendSearchEvent()
+                self._CLICK_BTN = True
+                self.Refresh()
 
     def OnMouseUp(self, evt):
         self._CLICK_BTN = False
@@ -985,7 +1023,64 @@ class PSFilters(wx.Panel):
                 i += 1
 
 
+class PSPatchBrowser(wx.Frame):
+    if PSConfig.PLATFORM == 'darwin':
+        _size = (332,622)
+    else:
+        _size = (332,600)
 
+    def __init__(self, parent, pos):
+        wx.Frame.__init__(self, parent, -1, "Patch Browser", pos, PSPatchBrowser._size)
+        self._basepanel = wx.Panel(self, -1, (0,0), PSPatchBrowser._size)
+        self._basepanel.SetBackgroundColour("#12181d")
+
+        self._title = wx.StaticText(self._basepanel, -1, "Patches", (9,9))
+        self._title.SetFont(wx.Font(**PSConfig.FONTS['light']['title1']))
+        self._title.SetForegroundColour("#c6dce9")
+
+        self._update_btn = PSButtons.PSUpdateButton(self._basepanel, (300,7))
+
+        header_h = 32
+        self._search_ctl = PSSearchCtrl(self._basepanel, -1, (2, 2+header_h), (PSPatchBrowser._size[0]-4, -1))
+        y = self._search_ctl.GetPosition()[1] + PSSearchCtrl._height + 2
+        self._filters = PSFilters(self._basepanel, -1, (0, y), (PSPatchBrowser._size[0], 60))
+        self._filters.addTags([tag for tag in PATCHES_TYPES_COLOURS.iterkeys() if tag != 'default'])
+        y += self._filters.GetSize()[1]
+        self._patches_list = PatchesList(self._basepanel, -1, (0, y + 2),
+                                         (PSPatchBrowser._size[0] - 2, PSPatchBrowser._size[1] - y - 2))
+        self._patches_list.SetBackgroundColour("#12181d")
+
+
+        self.Bind(wx.EVT_SIZE, self.OnResize)
+        self._basepanel.Bind(EVT_SEARCH, self.OnSearch)
+        self._basepanel.Bind(EVT_FILTERS_CHANGED, self.OnFiltersChanged)
+        self._update_btn.Bind(PSButtons.EVT_BTN_CLICK_UP, self.OnUpdate)
+
+    def OnResize(self, evt):
+        w, h = self.GetSize()
+        width = PSPatchBrowser._size[0]
+        self.SetSize((width, h))
+        self._basepanel.SetSize((width, h))
+        self._patches_list.SetSize((width - 2, h - 22 - self._patches_list.GetPosition()[1] + 2))
+        self._search_ctl.SetSize((width - 4, -1))
+        self._filters.SetSize((width, h))
+
+    def OnSearch(self, evt):
+        self._patches_list.setTextFilter(evt.GetText())
+        self._patches_list.applyFilters()
+
+    def OnFiltersChanged(self, evt):
+        self._patches_list.setTypeFilters(evt.GetFilters())
+        self._patches_list.applyFilters()
+
+    def OnUpdate(self, evt):
+        print "Update"
+
+    def addElements(self, elems):
+        self._patches_list.addElements(elems)
+
+    def addElement(self, elem):
+        self._patches_list.addElement(elem)
 
 if __name__ == "__main__":
     app = wx.App(False)
@@ -993,17 +1088,7 @@ if __name__ == "__main__":
     test = 0
 
     if test == 0:
-        width = 332
-        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (width, 522))
-        basepanel = wx.Panel(frame, -1, (0,0), (width,500))
-        basepanel.SetBackgroundColour("#12181d")
-        search = PSSearchCtrl(basepanel, -1, (2, 2), (width-4, -1))
-        y = PSSearchCtrl._height+2
-        filters = PSFilters(basepanel, -1, (0,y), (width, 60))
-        filters.addTags([tag for tag in PATCHES_TYPES_COLOURS.iterkeys() if tag != 'default'])
-        y += filters.GetSize()[1]
-        patches = PatchesList(basepanel, -1, (0, y+2), (width-2, 500-y-2))
-        patches.SetBackgroundColour("#12181d")
+        browser = PSPatchBrowser(None, (50,50))
         data1 = {'TYPE':'Analog','NAME':'Analogica','VERSION':1,'STATE':0,'PACKAGE':'Default library','ID':12,
                  'MODIFIED':False, 'USER_PATCH':True}
         data2 = {'TYPE':'Digital','NAME':'Digital Wonders','VERSION':2, 'STATE':1,'PACKAGE':'Community library','ID':14,
@@ -1030,52 +1115,7 @@ if __name__ == "__main__":
             datas.append(data6)
             datas.append(data7)
             datas.append(data8)
-        patches.addElements(datas)
-        #win.setTypeFilters(['Analog','Granular','Digital'])
-        #win.setTextFilter('Synth')
-        #win.applyFilters()
+        browser.addElements(datas)
 
-        def OnResize(evt):
-            w,h = frame.GetSize()
-            frame.SetSize((width,h))
-            basepanel.SetSize((width, h))
-            patches.SetSize((width-2,h-22-y))
-            search.SetSize((width-4,-1))
-            filters.SetSize((width, h))
-
-        frame.Bind(wx.EVT_SIZE, OnResize)
-
-        def OnSearch(evt):
-            patches.setTextFilter(evt.GetText())
-            patches.applyFilters()
-        basepanel.Bind(EVT_SEARCH, OnSearch)
-
-        def OnFiltersChanged(evt):
-            patches.setTypeFilters(evt.GetFilters())
-            patches.applyFilters()
-        basepanel.Bind(EVT_FILTERS_CHANGED, OnFiltersChanged)
-
-    elif test == 1:
-        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (332, 522))
-        basepanel = wx.Panel(frame, -1, (0, 0), (330, 500))
-        basepanel.SetBackgroundColour("#12181d")
-        tag = PSTag(basepanel, -1, (10,10), "Booboo")
-    elif test == 2:
-        width = 450
-        frame = wx.Frame(None, -1, "Patches List Test", (50, 50), (332, width))
-        basepanel = wx.Panel(frame, -1, (0, 0), (332, width))
-        basepanel.SetBackgroundColour("#12181d")
-        tags = PSFilters(basepanel, -1, (2,2), (328, width))
-        tags.addTags([tag for tag in PATCHES_TYPES_COLOURS.iterkeys() if tag != 'default'])
-
-        def OnResize(evt):
-            w,h = frame.GetSize()
-            frame.SetSize((width,h))
-            basepanel.SetSize((width,h-22))
-            tags.SetSize((width,h-22))
-        frame.Bind(wx.EVT_SIZE, OnResize)
-
-
-
-    frame.Show()
+    browser.Show()
     app.MainLoop()
